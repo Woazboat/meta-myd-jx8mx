@@ -83,7 +83,7 @@ CONFIG_RTW_IP_REACHABILITY_PATCH = y
 CONFIG_RTW_DEBUG = y
 # default log level is _DRV_INFO_ = 4,
 # please refer to "How_to_set_driver_debug_log_level.doc" to set the available level.
-CONFIG_RTW_LOG_LEVEL = 4
+CONFIG_RTW_LOG_LEVEL = 0
 ######################## Wake On Lan ##########################
 CONFIG_WOWLAN = n
 CONFIG_WAKEUP_TYPE = 0x7 #bit2: deauth, bit1: unicast, bit0: magic pkt.
@@ -98,7 +98,7 @@ CONFIG_RTW_SDIO_PM_KEEP_POWER = y
 ###################### MP HW TX MODE FOR VHT #######################
 CONFIG_MP_VHT_HW_TX_MODE = n
 ###################### Platform Related #######################
-CONFIG_PLATFORM_I386_PC = y
+CONFIG_PLATFORM_I386_PC = n
 CONFIG_PLATFORM_ANDROID_X86 = n
 CONFIG_PLATFORM_ANDROID_INTEL_X86 = n
 CONFIG_PLATFORM_JB_X86 = n
@@ -155,6 +155,7 @@ CONFIG_PLATFORM_HISILICON_HI3798 = n
 CONFIG_PLATFORM_NV_TK1 = n
 CONFIG_PLATFORM_RTL8197D = n
 CONFIG_PLATFORM_ZTE_ZX296716 = n
+CONFIG_PLATFORM_ARM_NXP=y
 ########### CUSTOMER ################################
 CONFIG_CUSTOMER_HUAWEI_GENERAL = n
 
@@ -1048,7 +1049,7 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/)
 ARCH ?= $(SUBARCH)
 CROSS_COMPILE ?=
 KVER  := $(shell uname -r)
-KSRC := /lib/modules/$(KVER)/build
+KERNEL_SRC := /lib/modules/$(KVER)/build
 MODDESTDIR := /lib/modules/$(KVER)/kernel/drivers/net/wireless/
 INSTALL_PREFIX :=
 STAGINGMODDIR := /lib/modules/$(KVER)/kernel/drivers/staging
@@ -1074,13 +1075,13 @@ ARCH ?= arm
 # for ubuntu environment
 #CROSS_COMPILE ?=
 #KVER := $(shell uname -r)
-#KSRC := /lib/modules/$(KVER)/build
+#KERNEL_SRC := /lib/modules/$(KVER)/build
 #MODDESTDIR := /lib/modules/$(KVER)/kernel/drivers/net/wireless/
 #INSTALL_PREFIX :=
 
 # for Android
 CROSS_COMPILE ?= /mnt/newdisk/android_sdk/nvidia_tk1/android_L/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi-
-KSRC ?=/mnt/newdisk/android_sdk/nvidia_tk1/android_L/out/target/product/shieldtablet/obj/KERNEL/
+KERNEL_SRC ?=/mnt/newdisk/android_sdk/nvidia_tk1/android_L/out/target/product/shieldtablet/obj/KERNEL/
 USER_MODULE_NAME := wlan
 
 endif
@@ -1092,8 +1093,8 @@ ARCH := $(R_ARCH)
 #CROSS_COMPILE := arm-none-linux-gnueabi-
 CROSS_COMPILE := $(R_CROSS_COMPILE)
 KVER:= 3.4.0
-#KSRC := ../../../../build/out/kernel
-KSRC := $(KERNEL_BUILD_PATH)
+#KERNEL_SRC := ../../../../build/out/kernel
+KERNEL_SRC := $(KERNEL_BUILD_PATH)
 MODULE_NAME :=wlan
 endif
 
@@ -1116,7 +1117,7 @@ endif
 
 ARCH := arm
 CROSS_COMPILE := /opt/arm-2011.09/bin/arm-none-linux-gnueabi-
-KSRC := /home/android_sdk/Action-semi/705a_android_L/android/kernel
+KERNEL_SRC := /home/android_sdk/Action-semi/705a_android_L/android/kernel
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_SUN50IW1P1), y)
@@ -1143,13 +1144,13 @@ endif
 ARCH := arm64
 # ===Cross compile setting for Android 5.1(64) SDK ===
 CROSS_COMPILE := /home/android_sdk/Allwinner/a64/android-51/lichee/out/sun50iw1p1/android/common/buildroot/external-toolchain/bin/aarch64-linux-gnu-
-KSRC :=/home/android_sdk/Allwinner/a64/android-51/lichee/linux-3.10/
+KERNEL_SRC :=/home/android_sdk/Allwinner/a64/android-51/lichee/linux-3.10/
 endif
 
 ifeq ($(CONFIG_PLATFORM_TI_AM3517), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_ANDROID -DCONFIG_PLATFORM_SHUTTLE
 CROSS_COMPILE := arm-eabi-
-KSRC := $(shell pwd)/../../../Android/kernel
+KERNEL_SRC := $(shell pwd)/../../../Android/kernel
 ARCH := arm
 endif
 
@@ -1158,7 +1159,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_MSTAR -DCONFIG_PLATFORM
 ARCH:=mips
 CROSS_COMPILE:= /usr/src/Mstar_kernel/mips-4.3/bin/mips-linux-gnu-
 KVER:= 2.6.28.9
-KSRC:= /usr/src/Mstar_kernel/2.6.28.9/
+KERNEL_SRC:= /usr/src/Mstar_kernel/2.6.28.9/
 endif
 
 ifeq ($(CONFIG_PLATFORM_MSTAR), y)
@@ -1173,7 +1174,7 @@ endif
 ARCH:=arm
 CROSS_COMPILE:= /usr/src/bin/arm-none-linux-gnueabi-
 KVER:= 3.1.10
-KSRC:= /usr/src/Mstar_kernel/3.1.10/
+KERNEL_SRC:= /usr/src/Mstar_kernel/3.1.10/
 endif
 
 ifeq ($(CONFIG_PLATFORM_ANDROID_X86), y)
@@ -1181,7 +1182,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 SUBARCH := $(shell uname -m | sed -e s/i.86/i386/)
 ARCH := $(SUBARCH)
 CROSS_COMPILE := /media/DATA-2/android-x86/ics-x86_20120130/prebuilt/linux-x86/toolchain/i686-unknown-linux-gnu-4.2.1/bin/i686-unknown-linux-gnu-
-KSRC := /media/DATA-2/android-x86/ics-x86_20120130/out/target/product/generic_x86/obj/kernel
+KERNEL_SRC := /media/DATA-2/android-x86/ics-x86_20120130/out/target/product/generic_x86/obj/kernel
 MODULE_NAME :=wlan
 endif
 
@@ -1204,7 +1205,7 @@ EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
 SUBARCH := $(shell uname -m | sed -e s/i.86/i386/)
 ARCH := $(SUBARCH)
 CROSS_COMPILE := /home/android_sdk/android-x86_JB/prebuilts/gcc/linux-x86/x86/i686-linux-android-4.7/bin/i686-linux-android-
-KSRC := /home/android_sdk/android-x86_JB/out/target/product/x86/obj/kernel/
+KERNEL_SRC := /home/android_sdk/android-x86_JB/out/target/product/x86/obj/kernel/
 MODULE_NAME :=wlan
 endif
 
@@ -1213,7 +1214,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH := arm
 CROSS_COMPILE := arm-none-linux-gnueabi-
 KVER  := 2.6.34.1
-KSRC ?= /usr/src/linux-2.6.34.1
+KERNEL_SRC ?= /usr/src/linux-2.6.34.1
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_S3C2K4), y)
@@ -1221,7 +1222,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH := arm
 CROSS_COMPILE := arm-linux-
 KVER  := 2.6.24.7_$(ARCH)
-KSRC := /usr/src/kernels/linux-$(KVER)
+KERNEL_SRC := /usr/src/kernels/linux-$(KVER)
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_S3C6K4), y)
@@ -1229,7 +1230,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH := arm
 CROSS_COMPILE := arm-none-linux-gnueabi-
 KVER  := 2.6.34.1
-KSRC ?= /usr/src/linux-2.6.34.1
+KERNEL_SRC ?= /usr/src/linux-2.6.34.1
 endif
 
 ifeq ($(CONFIG_PLATFORM_RTD2880B), y)
@@ -1237,7 +1238,7 @@ EXTRA_CFLAGS += -DCONFIG_BIG_ENDIAN -DCONFIG_PLATFORM_RTD2880B
 ARCH:=
 CROSS_COMPILE:=
 KVER:=
-KSRC:=
+KERNEL_SRC:=
 endif
 
 ifeq ($(CONFIG_PLATFORM_MIPS_RMI), y)
@@ -1245,7 +1246,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH:=mips
 CROSS_COMPILE:=mipsisa32r2-uclibc-
 KVER:=
-KSRC:= /root/work/kernel_realtek
+KERNEL_SRC:= /root/work/kernel_realtek
 endif
 
 ifeq ($(CONFIG_PLATFORM_MIPS_PLM), y)
@@ -1253,7 +1254,7 @@ EXTRA_CFLAGS += -DCONFIG_BIG_ENDIAN
 ARCH:=mips
 CROSS_COMPILE:=mipsisa32r2-uclibc-
 KVER:=
-KSRC:= /root/work/kernel_realtek
+KERNEL_SRC:= /root/work/kernel_realtek
 endif
 
 ifeq ($(CONFIG_PLATFORM_MSTAR389), y)
@@ -1261,14 +1262,14 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_MSTAR389
 ARCH:=mips
 CROSS_COMPILE:= mips-linux-gnu-
 KVER:= 2.6.28.10
-KSRC:= /home/mstar/mstar_linux/2.6.28.9/
+KERNEL_SRC:= /home/mstar/mstar_linux/2.6.28.9/
 endif
 
 ifeq ($(CONFIG_PLATFORM_MIPS_AR9132), y)
 EXTRA_CFLAGS += -DCONFIG_BIG_ENDIAN
 ARCH := mips
 CROSS_COMPILE := mips-openwrt-linux-
-KSRC := /home/alex/test_openwrt/tmp/linux-2.6.30.9
+KERNEL_SRC := /home/alex/test_openwrt/tmp/linux-2.6.30.9
 endif
 
 ifeq ($(CONFIG_PLATFORM_DMP_PHILIPS), y)
@@ -1276,7 +1277,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DRTK_DMP_PLATFORM
 ARCH := mips
 #CROSS_COMPILE:=/usr/local/msdk-4.3.6-mips-EL-2.6.12.6-0.9.30.3/bin/mipsel-linux-
 CROSS_COMPILE:=/usr/local/toolchain_mipsel/bin/mipsel-linux-
-KSRC ?=/usr/local/Jupiter/linux-2.6.12
+KERNEL_SRC ?=/usr/local/Jupiter/linux-2.6.12
 endif
 
 ifeq ($(CONFIG_PLATFORM_RTK_DMP), y)
@@ -1288,7 +1289,7 @@ endif
 ARCH:=mips
 CROSS_COMPILE:=mipsel-linux-
 KVER:=
-KSRC ?= /usr/src/DMP_Kernel/jupiter/linux-2.6.12
+KERNEL_SRC ?= /usr/src/DMP_Kernel/jupiter/linux-2.6.12
 endif
 
 ifeq ($(CONFIG_PLATFORM_MT53XX), y)
@@ -1296,7 +1297,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_MT53XX
 ARCH:= arm
 CROSS_COMPILE:= arm11_mtk_le-
 KVER:= 2.6.27
-KSRC?= /proj/mtk00802/BD_Compare/BDP/Dev/BDP_V301/BDP_Linux/linux-2.6.27
+KERNEL_SRC?= /proj/mtk00802/BD_Compare/BDP/Dev/BDP_V301/BDP_Linux/linux-2.6.27
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_MX51_241H), y)
@@ -1304,14 +1305,14 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_WISTRON_PLATFORM
 ARCH := arm
 CROSS_COMPILE := /opt/freescale/usr/local/gcc-4.1.2-glibc-2.5-nptl-3/arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-
 KVER  := 2.6.31
-KSRC ?= /lib/modules/2.6.31-770-g0e46b52/source
+KERNEL_SRC ?= /lib/modules/2.6.31-770-g0e46b52/source
 endif
 
 ifeq ($(CONFIG_PLATFORM_FS_MX61), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH := arm
 CROSS_COMPILE := /home/share/CusEnv/FreeScale/arm-eabi-4.4.3/bin/arm-eabi-
-KSRC ?= /home/share/CusEnv/FreeScale/FS_kernel_env
+KERNEL_SRC ?= /home/share/CusEnv/FreeScale/FS_kernel_env
 endif
 
 
@@ -1321,7 +1322,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_ACTIONS_ATJ227X
 ARCH := mips
 CROSS_COMPILE := /home/cnsd4/project/actions/tools-2.6.27/bin/mipsel-linux-gnu-
 KVER  := 2.6.27
-KSRC := /home/cnsd4/project/actions/linux-2.6.27.28
+KERNEL_SRC := /home/cnsd4/project/actions/linux-2.6.27.28
 endif
 
 ifeq ($(CONFIG_PLATFORM_TI_DM365), y)
@@ -1330,9 +1331,9 @@ EXTRA_CFLAGS += -DCONFIG_USE_USB_BUFFER_ALLOC_RX
 EXTRA_CFLAGS += -DCONFIG_SINGLE_XMIT_BUF -DCONFIG_SINGLE_RECV_BUF
 ARCH := arm
 #CROSS_COMPILE := /home/cnsd4/Appro/mv_pro_5.0/montavista/pro/devkit/arm/v5t_le/bin/arm_v5t_le-
-#KSRC := /home/cnsd4/Appro/mv_pro_5.0/montavista/pro/devkit/lsp/ti-davinci/linux-dm365
+#KERNEL_SRC := /home/cnsd4/Appro/mv_pro_5.0/montavista/pro/devkit/lsp/ti-davinci/linux-dm365
 CROSS_COMPILE := /opt/montavista/pro5.0/devkit/arm/v5t_le/bin/arm-linux-
-KSRC:= /home/vivotek/lsp/DM365/kernel_platform/kernel/linux-2.6.18
+KERNEL_SRC:= /home/vivotek/lsp/DM365/kernel_platform/kernel/linux-2.6.18
 KERNELOUTPUT := ${PRODUCTDIR}/tmp
 KVER  := 2.6.18
 endif
@@ -1342,7 +1343,7 @@ EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_MOZART
 ARCH := arm
 CROSS_COMPILE := /home/vivotek/lsp/mozart3v2/Mozart3e_Toolchain/build_arm_nofpu/usr/bin/arm-linux-
 KVER  := $(shell uname -r)
-KSRC:= /opt/Vivotek/lsp/mozart3v2/kernel_platform/kernel/mozart_kernel-1.17
+KERNEL_SRC:= /opt/Vivotek/lsp/mozart3v2/kernel_platform/kernel/mozart_kernel-1.17
 KERNELOUTPUT := /home/pink/sample/ODM/IP8136W-VINT/tmp/kernel
 endif
 
@@ -1354,7 +1355,7 @@ EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
 EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
 ARCH := arm
 CROSS_COMPILE := /home/android_sdk/nvidia/tegra-16r3-partner-android-4.1_20120723/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
-KSRC := /home/android_sdk/nvidia/tegra-16r3-partner-android-4.1_20120723/out/target/product/cardhu/obj/KERNEL
+KERNEL_SRC := /home/android_sdk/nvidia/tegra-16r3-partner-android-4.1_20120723/out/target/product/cardhu/obj/KERNEL
 MODULE_NAME := wlan
 endif
 
@@ -1366,7 +1367,7 @@ EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
 EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
 ARCH := arm
 CROSS_COMPILE := /home/android_sdk/nvidia/tegra-17r9-partner-android-4.2-dalmore_20130131/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
-KSRC := /home/android_sdk/nvidia/tegra-17r9-partner-android-4.2-dalmore_20130131/out/target/product/dalmore/obj/KERNEL
+KERNEL_SRC := /home/android_sdk/nvidia/tegra-17r9-partner-android-4.2-dalmore_20130131/out/target/product/dalmore/obj/KERNEL
 MODULE_NAME := wlan
 endif
 
@@ -1374,7 +1375,7 @@ ifeq ($(CONFIG_PLATFORM_ARM_TCC8900), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH := arm
 CROSS_COMPILE := /home/android_sdk/Telechips/SDK_2304_20110613/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
-KSRC := /home/android_sdk/Telechips/SDK_2304_20110613/kernel
+KERNEL_SRC := /home/android_sdk/Telechips/SDK_2304_20110613/kernel
 MODULE_NAME := wlan
 endif
 
@@ -1382,7 +1383,7 @@ ifeq ($(CONFIG_PLATFORM_ARM_TCC8920), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH := arm
 CROSS_COMPILE := /home/android_sdk/Telechips/v12.06_r1-tcc-android-4.0.4/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
-KSRC := /home/android_sdk/Telechips/v12.06_r1-tcc-android-4.0.4/kernel
+KERNEL_SRC := /home/android_sdk/Telechips/v12.06_r1-tcc-android-4.0.4/kernel
 MODULE_NAME := wlan
 endif
 
@@ -1393,7 +1394,7 @@ EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
 EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
 ARCH := arm
 CROSS_COMPILE := /home/android_sdk/Telechips/v13.03_r1-tcc-android-4.2.2_ds_patched/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
-KSRC := /home/android_sdk/Telechips/v13.03_r1-tcc-android-4.2.2_ds_patched/kernel
+KERNEL_SRC := /home/android_sdk/Telechips/v13.03_r1-tcc-android-4.2.2_ds_patched/kernel
 MODULE_NAME := wlan
 endif
 
@@ -1401,7 +1402,7 @@ ifeq ($(CONFIG_PLATFORM_ARM_RK2818), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_ANDROID -DCONFIG_PLATFORM_ROCKCHIPS
 ARCH := arm
 CROSS_COMPILE := /usr/src/release_fae_version/toolchain/arm-eabi-4.4.0/bin/arm-eabi-
-KSRC := /usr/src/release_fae_version/kernel25_A7_281x
+KERNEL_SRC := /usr/src/release_fae_version/kernel25_A7_281x
 MODULE_NAME := wlan
 endif
 
@@ -1416,7 +1417,7 @@ EXTRA_CFLAGS += -DRTW_SUPPORT_PLATFORM_SHUTDOWN
 # default setting for Special function
 ARCH := arm
 CROSS_COMPILE := /home/android_sdk/Rockchip/Rk3188/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
-KSRC := /home/android_sdk/Rockchip/Rk3188/kernel
+KERNEL_SRC := /home/android_sdk/Rockchip/Rk3188/kernel
 MODULE_NAME := wlan
 endif
 
@@ -1433,7 +1434,7 @@ EXTRA_CFLAGS += -fno-pic
 ARCH := arm
 CROSS_COMPILE := /home/android_sdk/Rockchip/rk3066_20130607/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.6/bin/arm-linux-androideabi-
 #CROSS_COMPILE := /home/android_sdk/Rockchip/Rk3066sdk/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.6/bin/arm-linux-androideabi-
-KSRC := /home/android_sdk/Rockchip/Rk3066sdk/kernel
+KERNEL_SRC := /home/android_sdk/Rockchip/Rk3066sdk/kernel
 MODULE_NAME :=wlan
 endif
 
@@ -1441,7 +1442,7 @@ ifeq ($(CONFIG_PLATFORM_ARM_URBETTER), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN #-DCONFIG_MINIMAL_MEMORY_USAGE
 ARCH := arm
 CROSS_COMPILE := /media/DATA-1/urbetter/arm-2009q3/bin/arm-none-linux-gnueabi-
-KSRC := /media/DATA-1/urbetter/ics-urbetter/kernel
+KERNEL_SRC := /media/DATA-1/urbetter/ics-urbetter/kernel
 MODULE_NAME := wlan
 endif
 
@@ -1449,9 +1450,9 @@ ifeq ($(CONFIG_PLATFORM_ARM_TI_PANDA), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN #-DCONFIG_MINIMAL_MEMORY_USAGE
 ARCH := arm
 #CROSS_COMPILE := /media/DATA-1/aosp/ics-aosp_20111227/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
-#KSRC := /media/DATA-1/aosp/android-omap-panda-3.0_20120104
+#KERNEL_SRC := /media/DATA-1/aosp/android-omap-panda-3.0_20120104
 CROSS_COMPILE := /media/DATA-1/android-4.0/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
-KSRC := /media/DATA-1/android-4.0/panda_kernel/omap
+KERNEL_SRC := /media/DATA-1/android-4.0/panda_kernel/omap
 MODULE_NAME := wlan
 endif
 
@@ -1459,7 +1460,7 @@ ifeq ($(CONFIG_PLATFORM_MIPS_JZ4760), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_MINIMAL_MEMORY_USAGE
 ARCH ?= mips
 CROSS_COMPILE ?= /mnt/sdb5/Ingenic/Umido/mips-4.3/bin/mips-linux-gnu-
-KSRC ?= /mnt/sdb5/Ingenic/Umido/kernel
+KERNEL_SRC ?= /mnt/sdb5/Ingenic/Umido/kernel
 endif
 
 ifeq ($(CONFIG_PLATFORM_SZEBOOK), y)
@@ -1467,7 +1468,7 @@ EXTRA_CFLAGS += -DCONFIG_BIG_ENDIAN
 ARCH:=arm
 CROSS_COMPILE:=/opt/crosstool2/bin/armeb-unknown-linux-gnueabi-
 KVER:= 2.6.31.6
-KSRC:= ../code/linux-2.6.31.6-2020/
+KERNEL_SRC:= ../code/linux-2.6.31.6-2020/
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_SUNxI), y)
@@ -1492,8 +1493,8 @@ ARCH := arm
 #CROSS_COMPILE := arm-none-linux-gnueabi-
 CROSS_COMPILE=/home/android_sdk/Allwinner/a10/android-jb42/lichee-jb42/buildroot/output/external-toolchain/bin/arm-none-linux-gnueabi-
 KVER  := 3.0.8
-#KSRC:= ../lichee/linux-3.0/
-KSRC=/home/android_sdk/Allwinner/a10/android-jb42/lichee-jb42/linux-3.0
+#KERNEL_SRC:= ../lichee/linux-3.0/
+KERNEL_SRC=/home/android_sdk/Allwinner/a10/android-jb42/lichee-jb42/linux-3.0
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_SUN6I), y)
@@ -1519,13 +1520,13 @@ endif
 ARCH := arm
 #Android-JB42
 #CROSS_COMPILE := /home/android_sdk/Allwinner/a31/android-jb42/lichee/buildroot/output/external-toolchain/bin/arm-linux-gnueabi-
-#KSRC :=/home/android_sdk/Allwinner/a31/android-jb42/lichee/linux-3.3
+#KERNEL_SRC :=/home/android_sdk/Allwinner/a31/android-jb42/lichee/linux-3.3
 #ifeq ($(CONFIG_USB_HCI), y)
 #MODULE_NAME := 8188eu_sw
 #endif
 # ==== Cross compile setting for kitkat-a3x_v4.5 =====
 CROSS_COMPILE := /home/android_sdk/Allwinner/a31/kitkat-a3x_v4.5/lichee/buildroot/output/external-toolchain/bin/arm-linux-gnueabi-
-KSRC :=/home/android_sdk/Allwinner/a31/kitkat-a3x_v4.5/lichee/linux-3.3
+KERNEL_SRC :=/home/android_sdk/Allwinner/a31/kitkat-a3x_v4.5/lichee/linux-3.3
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_SUN7I), y)
@@ -1549,13 +1550,13 @@ endif
 ARCH := arm
 # ===Cross compile setting for Android 4.2 SDK ===
 #CROSS_COMPILE := /home/android_sdk/Allwinner/a20_evb/lichee/out/android/common/buildroot/external-toolchain/bin/arm-linux-gnueabi-
-#KSRC := /home/android_sdk/Allwinner/a20_evb/lichee/linux-3.3
+#KERNEL_SRC := /home/android_sdk/Allwinner/a20_evb/lichee/linux-3.3
 # ==== Cross compile setting for Android 4.3 SDK =====
 #CROSS_COMPILE := /home/android_sdk/Allwinner/a20/android-jb43/lichee/out/android/common/buildroot/external-toolchain/bin/arm-linux-gnueabi-
-#KSRC := /home/android_sdk/Allwinner/a20/android-jb43/lichee/linux-3.4
+#KERNEL_SRC := /home/android_sdk/Allwinner/a20/android-jb43/lichee/linux-3.4
 # ==== Cross compile setting for kitkat-a20_v4.4 =====
 CROSS_COMPILE := /home/android_sdk/Allwinner/a20/kitkat-a20_v4.4/lichee/out/android/common/buildroot/external-toolchain/bin/arm-linux-gnueabi-
-KSRC := /home/android_sdk/Allwinner/a20/kitkat-a20_v4.4/lichee/linux-3.4
+KERNEL_SRC := /home/android_sdk/Allwinner/a20/kitkat-a20_v4.4/lichee/linux-3.4
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_SUN8I_W3P1), y)
@@ -1579,10 +1580,10 @@ endif
 ARCH := arm
 # ===Cross compile setting for Android 4.2 SDK ===
 #CROSS_COMPILE := /home/android_sdk/Allwinner/a23/android-jb42/lichee/out/android/common/buildroot/external-toolchain/bin/arm-linux-gnueabi-
-#KSRC :=/home/android_sdk/Allwinner/a23/android-jb42/lichee/linux-3.4
+#KERNEL_SRC :=/home/android_sdk/Allwinner/a23/android-jb42/lichee/linux-3.4
 # ===Cross compile setting for Android 4.4 SDK ===
 CROSS_COMPILE := /home/android_sdk/Allwinner/a23/android-kk44/lichee/out/android/common/buildroot/external-toolchain/bin/arm-linux-gnueabi-
-KSRC :=/home/android_sdk/Allwinner/a23/android-kk44/lichee/linux-3.4
+KERNEL_SRC :=/home/android_sdk/Allwinner/a23/android-kk44/lichee/linux-3.4
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_SUN8I_W5P1), y)
@@ -1609,7 +1610,7 @@ endif
 ARCH := arm
 # ===Cross compile setting for Android L SDK ===
 CROSS_COMPILE := /home/android_sdk/Allwinner/a33/android-L/lichee/out/sun8iw5p1/android/common/buildroot/external-toolchain/bin/arm-linux-gnueabi-
-KSRC :=/home/android_sdk/Allwinner/a33/android-L/lichee/linux-3.4
+KERNEL_SRC :=/home/android_sdk/Allwinner/a33/android-L/lichee/linux-3.4
 endif
 
 ifeq ($(CONFIG_PLATFORM_ACTIONS_ATV5201), y)
@@ -1618,7 +1619,7 @@ EXTRA_CFLAGS += -DCONFIG_SDIO_DISABLE_RXFIFO_POLLING_LOOP
 ARCH := mips
 CROSS_COMPILE := mipsel-linux-gnu-
 KVER  := $(KERNEL_VER)
-KSRC:= $(CFGDIR)/../../kernel/linux-$(KERNEL_VER)
+KERNEL_SRC:= $(CFGDIR)/../../kernel/linux-$(KERNEL_VER)
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_RTD299X), y)
@@ -1630,7 +1631,7 @@ EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
 # Enable this for Android 5.0
 EXTRA_CFLAGS += -DCONFIG_RADIO_WORK
 endif
-#ARCH, CROSS_COMPILE, KSRC,and  MODDESTDIR are provided by external makefile
+#ARCH, CROSS_COMPILE, KERNEL_SRC,and  MODDESTDIR are provided by external makefile
 INSTALL_PREFIX :=
 endif
 
@@ -1645,8 +1646,8 @@ ifeq ($(CROSS_COMPILE),)
        CROSS_COMPILE = arm-hisiv200-linux-
 endif
 MODULE_NAME := rtl8192eu
-ifeq ($(KSRC),)
-       KSRC := ../../../../../../kernel/linux-3.4.y
+ifeq ($(KERNEL_SRC),)
+       KERNEL_SRC := ../../../../../../kernel/linux-3.4.y
 endif
 endif
 
@@ -1674,9 +1675,9 @@ EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
 
 ARCH ?= arm
 CROSS_COMPILE ?= /HiSTBAndroidV600R003C00SPC021_git_0512/device/hisilicon/bigfish/sdk/tools/linux/toolchains/arm-histbv310-linux/bin/arm-histbv310-linux-
-ifndef KSRC
-KSRC := /HiSTBAndroidV600R003C00SPC021_git_0512/device/hisilicon/bigfish/sdk/source/kernel/linux-3.18.y
-KSRC += O=/HiSTBAndroidV600R003C00SPC021_git_0512/out/target/product/Hi3798MV200/obj/KERNEL_OBJ
+ifndef KERNEL_SRC
+KERNEL_SRC := /HiSTBAndroidV600R003C00SPC021_git_0512/device/hisilicon/bigfish/sdk/source/kernel/linux-3.18.y
+KERNEL_SRC += O=/HiSTBAndroidV600R003C00SPC021_git_0512/out/target/product/Hi3798MV200/obj/KERNEL_OBJ
 endif
 
 ifeq ($(CONFIG_RTL8822B), y)
@@ -1743,10 +1744,10 @@ EXTRA_CFLAGS += -DCONFIG_RADIO_WORK
 
 ARCH ?= arm64
 CROSS_COMPILE ?= /4.4_S905L_8822bs_compile/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/bin/aarch64-linux-gnu-
-ifndef KSRC
-KSRC := /4.4_S905L_8822bs_compile/common
+ifndef KERNEL_SRC
+KERNEL_SRC := /4.4_S905L_8822bs_compile/common
 # To locate output files in a separate directory.
-KSRC += O=/4.4_S905L_8822bs_compile/KERNEL_OBJ
+KERNEL_SRC += O=/4.4_S905L_8822bs_compile/KERNEL_OBJ
 endif
 
 ifeq ($(CONFIG_RTL8822B), y)
@@ -1769,7 +1770,7 @@ _PLATFORM_FILES += platform/platform_ARM_WMT_sdio.o
 endif
 ARCH := arm
 CROSS_COMPILE := /home/android_sdk/WonderMedia/wm8880-android4.4/toolchain/arm_201103_gcc4.5.2/mybin/arm_1103_le-
-KSRC := /home/android_sdk/WonderMedia/wm8880-android4.4/kernel4.4/
+KERNEL_SRC := /home/android_sdk/WonderMedia/wm8880-android4.4/kernel4.4/
 MODULE_NAME :=8189es_kk
 endif
 
@@ -1798,9 +1799,9 @@ ARCH := arm
 # ==== Cross compile setting for Android 4.4 SDK =====
 #CROSS_COMPILE := arm-linux-gnueabihf-
 KVER  := 3.10.24
-#KSRC :=/home/android_sdk/Allwinner/a20/android-kitkat44/lichee/linux-3.4
+#KERNEL_SRC :=/home/android_sdk/Allwinner/a20/android-kitkat44/lichee/linux-3.4
 CROSS_COMPILE := /home/realtek/software_phoenix/phoenix/toolchain/usr/local/arm-2013.11/bin/arm-linux-gnueabihf-
-KSRC := /home/realtek/software_phoenix/linux-kernel
+KERNEL_SRC := /home/realtek/software_phoenix/linux-kernel
 MODULE_NAME := 8192eu
 
 endif
@@ -1835,9 +1836,9 @@ ARCH := arm64
 #CROSS_COMPILE := arm-linux-gnueabihf-
 #KVER := 4.1.10
 #CROSS_COMPILE := $(CROSS)
-#KSRC := $(LINUX_KERNEL_PATH)
+#KERNEL_SRC := $(LINUX_KERNEL_PATH)
 CROSS_COMPILE := /home/android_sdk/DHC/trunk-6.0.0_r1-QA160627/phoenix/toolchain/asdk64-4.9.4-a53-EL-3.10-g2.19-a64nt-160307/bin/asdk64-linux-
-KSRC := /home/android_sdk/DHC/trunk-6.0.0_r1-QA160627/linux-kernel
+KERNEL_SRC := /home/android_sdk/DHC/trunk-6.0.0_r1-QA160627/linux-kernel
 endif
 
 ifeq ($(CONFIG_PLATFORM_NOVATEK_NT72668), y)
@@ -1850,8 +1851,8 @@ EXTRA_CFLAGS += -DCONFIG_USE_USB_BUFFER_ALLOC_TX
 ARCH ?= arm
 CROSS_COMPILE := arm-linux-gnueabihf-
 KVER := 3.8.0
-KSRC := /Custom/Novatek/TCL/linux-3.8_header
-#KSRC := $(KERNELDIR)
+KERNEL_SRC := /Custom/Novatek/TCL/linux-3.8_header
+#KERNEL_SRC := $(KERNELDIR)
 endif
 
 ifeq ($(CONFIG_PLATFORM_ARM_TCC8930_JB42), y)
@@ -1861,7 +1862,7 @@ EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
 EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
 ARCH := arm
 CROSS_COMPILE := /home/android_sdk/Telechips/v13.05_r1-tcc-android-4.2.2_tcc893x-evm_build/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
-KSRC := /home/android_sdk/Telechips/v13.05_r1-tcc-android-4.2.2_tcc893x-evm_build/kernel
+KERNEL_SRC := /home/android_sdk/Telechips/v13.05_r1-tcc-android-4.2.2_tcc893x-evm_build/kernel
 MODULE_NAME := wlan
 endif 
 
@@ -1870,7 +1871,7 @@ EXTRA_CFLAGS += -DCONFIG_BIG_ENDIAN -DCONFIG_PLATFORM_RTL8197D
 export DIR_LINUX=$(shell pwd)/../SDK/rlxlinux-sdk321-v50/linux-2.6.30
 ARCH ?= rlx
 CROSS_COMPILE:= $(DIR_LINUX)/../toolchain/rsdk-1.5.5-5281-EB-2.6.30-0.9.30.3-110714/bin/rsdk-linux-
-KSRC := $(DIR_LINUX)
+KERNEL_SRC := $(DIR_LINUX)
 endif
 
 ifeq ($(CONFIG_PLATFORM_ZTE_ZX296716), y)
@@ -1893,7 +1894,7 @@ endif
 
 ARCH ?= arm64
 CROSS_COMPILE ?=
-KSRC ?=
+KERNEL_SRC ?=
 
 ifeq ($(CONFIG_RTL8822B), y)
 ifeq ($(CONFIG_SDIO_HCI), y)
@@ -1902,6 +1903,18 @@ USER_MODULE_NAME := 8822bs
 endif
 endif
 
+endif
+
+ifeq ($(CONFIG_PLATFORM_ARM_NXP) ,y)
+EXTRA_CFLAGS += -Wno-error=date-time
+EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
+EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
+
+ARCH ?=arm64
+CROSS_COMPILE ?= /home/duxy/opt/fsl-imx-wayland/4.14-sumo/sysroots/x86_64-pokysdk-linux/usr/bin/aarch64-poky-linux/aarch64-poky-linux-
+
+KERNEL_SRC := /home/duxy/linux_8m_software/myd-j8mx/04-Source/fsl-release-yocto/build-xwayland/tmp/work/imx8mqevk-poky-linux/linux-imx/4.9.88-r0/build
+#MODULE_NAME:=wlan_test
 endif
 
 ########### CUSTOMER ################################
@@ -2012,7 +2025,7 @@ export CONFIG_RTL8822BE = m
 all: modules
 
 modules:
-	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  modules
+	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KERNEL_SRC) M=$(shell pwd)  modules
 
 strip:
 	$(CROSS_COMPILE)strip $(MODULE_NAME).ko --strip-unneeded
@@ -2021,6 +2034,9 @@ install:
 	install -p -m 644 $(MODULE_NAME).ko  $(MODDESTDIR)
 	/sbin/depmod -a ${KVER}
 
+modules_install:
+	$(MAKE) INSTALL_MOD_STRIP=1 -C $(KERNEL_SRC) M=$(shell pwd) modules_install
+	
 uninstall:
 	rm -f $(MODDESTDIR)/$(MODULE_NAME).ko
 	/sbin/depmod -a ${KVER}
@@ -2067,7 +2083,7 @@ config_r:
 .PHONY: modules clean
 
 clean:
-	#$(MAKE) -C $(KSRC) M=$(shell pwd) clean
+	#$(MAKE) -C $(KERNEL_SRC) M=$(shell pwd) clean
 	cd hal ; rm -fr */*/*/*.mod.c */*/*/*.mod */*/*/*.o */*/*/.*.cmd */*/*/*.ko
 	cd hal ; rm -fr */*/*.mod.c */*/*.mod */*/*.o */*/.*.cmd */*/*.ko
 	cd hal ; rm -fr */*.mod.c */*.mod */*.o */.*.cmd */*.ko
