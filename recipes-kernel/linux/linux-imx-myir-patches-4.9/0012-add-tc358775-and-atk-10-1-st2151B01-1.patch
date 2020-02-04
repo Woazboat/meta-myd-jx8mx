@@ -1,0 +1,1854 @@
+From 17c7a7f65fd773eb7090cef7955bd1dac8f15d4e Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Fri, 25 Jan 2019 18:56:03 +0800
+Subject: [PATCH 12/34] add tc358775 and atk-10-1 st2151B01-1
+
+---
+ arch/arm64/boot/dts/freescale/Makefile        |   5 +-
+ .../myb-fsl-imx8mq-evk-dcss-tc358775.dts      | 123 +++
+ .../myb-fsl-imx8mq-evk-lcdif-tc358775.dts     | 117 +++
+ .../boot/dts/freescale/panel-ATK-10-1.dtsi    | 143 +++
+ .../boot/dts/freescale/panel-st2151B01-1.dtsi | 122 +++
+ arch/arm64/configs/defconfig                  |   6 +-
+ drivers/gpu/drm/panel/Kconfig                 |   8 +
+ drivers/gpu/drm/panel/Makefile                |   2 +
+ drivers/gpu/drm/panel/panel-tc358775.c        | 977 ++++++++++++++++++
+ drivers/gpu/drm/panel/tc358775_i2c.c          | 245 +++++
+ 10 files changed, 1746 insertions(+), 2 deletions(-)
+ create mode 100755 arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dcss-tc358775.dts
+ create mode 100755 arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775.dts
+ create mode 100755 arch/arm64/boot/dts/freescale/panel-ATK-10-1.dtsi
+ create mode 100755 arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
+ mode change 100644 => 100755 drivers/gpu/drm/panel/Kconfig
+ mode change 100644 => 100755 drivers/gpu/drm/panel/Makefile
+ create mode 100755 drivers/gpu/drm/panel/panel-tc358775.c
+ create mode 100755 drivers/gpu/drm/panel/tc358775_i2c.c
+
+diff --git a/arch/arm64/boot/dts/freescale/Makefile b/arch/arm64/boot/dts/freescale/Makefile
+index 1b1aae4aaf46..fc2e3f95b753 100755
+--- a/arch/arm64/boot/dts/freescale/Makefile
++++ b/arch/arm64/boot/dts/freescale/Makefile
+@@ -60,7 +60,10 @@ dtb-$(CONFIG_ARCH_FSL_IMX8MQ) += fsl-imx8mq-ddr3l-arm2.dtb \
+ 				 fsl-imx8mq-evk-ak4497.dtb \
+ 				 fsl-imx8mq-evk-audio-tdm.dtb \
+ 				 fsl-imx8mq-evk-drm.dtb \
+-				 myb-fsl-imx8mq-evk.dtb
++				 myb-fsl-imx8mq-evk.dtb \
++				 myb-fsl-imx8mq-evk-lcdif-tc358775.dtb \
++				 myb-fsl-imx8mq-evk-dcss-tc358775.dtb \
++				 myb-fsl-imx8mq-evk-tc358775-dual-display.dtb
+ 
+ always		:= $(dtb-y)
+ subdir-y	:= $(dts-dirs)
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dcss-tc358775.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dcss-tc358775.dts
+new file mode 100755
+index 000000000000..3d32aef69e53
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dcss-tc358775.dts
+@@ -0,0 +1,123 @@
++/*
++ * Copyright 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include "myb-fsl-imx8mq-evk.dts"
++//#include "panel-ATK-10-1.dtsi"
++#include "panel-st2151B01-1.dtsi"
++
++&hdmi {
++	status = "disabled";
++};
++
++&dcss {
++	status = "okay";
++	disp-dev = "mipi_disp";
++
++	clocks = <&clk IMX8MQ_CLK_DISP_APB_ROOT>,
++		 <&clk IMX8MQ_CLK_DISP_AXI_ROOT>,
++		 <&clk IMX8MQ_CLK_DISP_RTRM_ROOT>,
++		 <&clk IMX8MQ_CLK_DC_PIXEL_DIV>,
++		 <&clk IMX8MQ_CLK_DUMMY>,
++		 <&clk IMX8MQ_CLK_DISP_DTRC_DIV>;
++	clock-names = "apb", "axi", "rtrm", "pix_div", "pix_out", "dtrc";
++
++	assigned-clocks = <&clk IMX8MQ_CLK_DC_PIXEL_SRC>,
++			  <&clk IMX8MQ_CLK_DISP_AXI_SRC>,
++			  <&clk IMX8MQ_CLK_DISP_RTRM_SRC>,
++			  <&clk IMX8MQ_CLK_DISP_RTRM_PRE_DIV>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_SYS1_PLL_800M>,
++				 <&clk IMX8MQ_SYS1_PLL_800M>,
++				 <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rates = <600000000>,
++			       <800000000>,
++			       <400000000>,
++			       <400000000>,
++			       <0>,
++			       <599999999>;
++
++	dcss_disp0: port@0 {
++		reg = <0>;
++
++		dcss_disp0_mipi_dsi: mipi_dsi {
++			remote-endpoint = <&mipi_dsi_in>;
++		};
++	};
++};
++
++&mipi_dsi_phy {
++	status = "okay";
++};
++
++&mipi_dsi {
++	status = "okay";
++	assigned-clocks = <&clk IMX8MQ_CLK_DSI_PHY_REF_SRC>,
++			  <&clk IMX8MQ_CLK_DSI_CORE_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_SYS1_PLL_266M>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rates = <24000000>,
++			       <266000000>,
++			       <0>,
++			       <599999999>;
++
++	port@1 {
++		mipi_dsi_in: endpoint {
++			remote-endpoint = <&dcss_disp0_mipi_dsi>;
++		};
++	};
++
++};
++
++&mipi_dsi_bridge {
++	status = "okay";
++
++
++	port@1 {
++		mipi_dsi_bridge_out: endpoint {
++			remote-endpoint = <&panel1_in>;
++		};
++	};
++};
++
++&iomuxc {
++	imx8mq-evk {
++		pinctrl_mipi_dsi_en: mipi_dsi_en {
++			fsl,pins = <
++				MX8MQ_IOMUXC_SAI5_RXD3_GPIO3_IO24 0x16
++				MX8MQ_IOMUXC_SAI3_RXC_GPIO4_IO29	0x16
++				
++			>;
++		};
++	};
++};
++
++
++&i2c1 {
++	tc358775:tc358775@0x0f{
++		compatible = "toshiba,tc358775";
++		reg  = <0x0f>;
++		status = "okay";
++	};
++
++
++};
++
++
++
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775.dts
+new file mode 100755
+index 000000000000..c50a71558a82
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775.dts
+@@ -0,0 +1,117 @@
++/*
++ * Copyright 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include "myb-fsl-imx8mq-evk.dts"
++//#include "panel-ATK-10-1.dtsi"
++#include "panel-st2151B01-1.dtsi"
++
++/ {
++	display-subsystem {
++		status = "disabled";
++	};
++};
++
++&irqsteer_dcss {
++	status = "disabled";
++};
++
++&dcss {
++	status = "disabled";
++};
++
++&hdmi {
++	status = "disabled";
++};
++
++
++
++&lcdif {
++	status = "okay";
++
++	assigned-clocks = <&clk IMX8MQ_CLK_LCDIF_PIXEL_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rate = <120000000>,
++			      <0>,
++			      <599999999>;
++	
++	port@0 {
++		lcdif_mipi_dsi: mipi-dsi-endpoint {
++			remote-endpoint = <&mipi_dsi_in>;
++		};
++	};
++};
++
++&mipi_dsi_phy {
++	status = "okay";
++};
++
++&mipi_dsi {
++	status = "okay";
++	as_bridge;
++	sync-pol = <1>;
++	assigned-clocks = <&clk IMX8MQ_CLK_DSI_PHY_REF_SRC>,
++			  <&clk IMX8MQ_CLK_DSI_CORE_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_SYS1_PLL_266M>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rates = <24000000>,
++			       <266000000>,
++			       <0>,
++			       <599999999>;
++
++	port@1 {
++		mipi_dsi_in: endpoint {
++			remote-endpoint = <&lcdif_mipi_dsi>;
++		};
++	};
++};
++
++&mipi_dsi_bridge {
++	status = "okay";
++
++
++	port@1 {
++		mipi_dsi_bridge_out: endpoint {
++			remote-endpoint = <&panel1_in>;
++		};
++	};
++};
++
++&iomuxc {
++	imx8mq-evk {
++		pinctrl_mipi_dsi_en: mipi_dsi_en {
++			fsl,pins = <
++				MX8MQ_IOMUXC_SAI5_RXD3_GPIO3_IO24 0x16
++				MX8MQ_IOMUXC_SAI3_RXC_GPIO4_IO29	0x16
++				
++			>;
++		};
++
++	};
++};
++
++&i2c1 {
++	tc358775:tc358775@0x0f{
++		compatible = "toshiba,tc358775";
++		reg  = <0x0f>;
++		status = "okay";
++	};
++};
++
++
+diff --git a/arch/arm64/boot/dts/freescale/panel-ATK-10-1.dtsi b/arch/arm64/boot/dts/freescale/panel-ATK-10-1.dtsi
+new file mode 100755
+index 000000000000..b65edbcf2317
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/panel-ATK-10-1.dtsi
+@@ -0,0 +1,143 @@
++/{
++	lvds_backlight0: lvds_backlight@0 {
++		compatible = "pwm-backlight";
++		pwms = <&pwm1 0 5000000 0>;
++		pinctrl-0 = <&pinctrl_lvds0_pwm1>;
++		enable-gpios = <&gpio4 28 GPIO_ACTIVE_HIGH>; 
++		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
++				     10 11 12 13 14 15 16 17 18 19
++				     20 21 22 23 24 25 26 27 28 29
++				     30 31 32 33 34 35 36 37 38 39
++				     40 41 42 43 44 45 46 47 48 49
++				     50 51 52 53 54 55 56 57 58 59
++				     60 61 62 63 64 65 66 67 68 69
++				     70 71 72 73 74 75 76 77 78 79
++				     80 81 82 83 84 85 86 87 88 89
++				     90 91 92 93 94 95 96 97 98 99
++				    100>;
++		default-brightness-level = <80>;
++	};
++};
++
++
++&lcdif{
++
++	max-res = <1280>, <800>;
++};
++&mipi_dsi_bridge{
++	panel@0 {
++		compatible = "toshiba,panel-tc358775";
++		reg = <0>;
++		pinctrl-0 = <&pinctrl_mipi_dsi_en>;
++		stby-gpio = <&gpio3 24 GPIO_ACTIVE_HIGH>;
++		reset-gpio = <&gpio4 29 GPIO_ACTIVE_HIGH>;
++		dsi-lanes = <4>;
++		panel-width-mm = <1280>;
++		panel-height-mm = <800>;
++		
++		toshiba,debug = <1>;
++		toshiba,ppi_tx_rx_ta =         <0x00030005>;
++		toshiba,ppi_lptxtimecnt =      <0x00000003>;
++		toshiba,ppi_d0s_clrsipocount = <0x00000004>;
++		toshiba,ppi_d1s_clrsipocount = <0x00000004>;
++		toshiba,ppi_d2s_clrsipocount = <0x00000004>;
++		toshiba,ppi_d3s_clrsipocount = <0x00000004>;
++		toshiba,ppi_laneenable =       <0x0000001f>; 
++		toshiba,dsi_laneenable =       <0x0000001f>; 
++		toshiba,ppi_sartppi =          <0x00000001>; 
++		toshiba,dsi_sartppi =          <0x00000001>;
++		
++		toshiba,vpctrl =               <0x03F00100>; 
++		toshiba,htim1 =                <0x0050000A>;
++		toshiba,htim2 =                <0x00460500>;
++		toshiba,vtim1 =                <0x000A0003>;
++		toshiba,vtim2 =                <0x000A0320>;
++		toshiba,vfuen =                <0x00000001>;
++		toshiba,lvphy0 =               <0x00448006>;
++		toshiba,lvphy0_1 =             <0x00048006>;
++		toshiba,sysrst =               <0x00000004>; 
++
++		
++		toshiba,lvmx0003 =             <0x03020100>;
++		toshiba,lvmx0407 = 						 <0x08050704>;
++		toshiba,lvmx0811 = 						 <0x0f0e0a09>;
++		toshiba,lvmx1215 = 						 <0x100d0c0b>;
++		toshiba,lvmx1619 = 						 <0x12111716>;
++		toshiba,lvmx2023 = 						 <0x1b151413>;
++		toshiba,lvmx2427 = 						 <0x061a1918>;
++		
++		toshiba,lvcfg =                <0x00000031>;
++		
++		backlight = <&lvds_backlight0>;
++		client-device  = <&tc358775>;
++		
++		display-timings {
++				native-mode = <&timing0>;
++				timing0:timing0{
++					clock-frequency = <70000000>;
++					hactive = <1280>;
++					hsync-len = <8>;
++					hback-porch = <45>;
++					hfront-porch = <100>;
++					vactive = <800>;
++					vsync-len = <1>;
++					vback-porch = <4>;
++					vfront-porch = <4>;
++					
++					vsync-active = <0>;
++					hsync-active =<0>;
++					de-active =<0>;
++					pixelclk-active =<0>;
++				};
++		};
++		port {
++			panel1_in: endpoint {
++				remote-endpoint = <&mipi_dsi_bridge_out>;
++			};
++		};
++	};
++
++};
++&iomuxc {
++	imx8mq-evk {
++		pinctrl_lvds0_pwm1: lvds0pwm1grp {
++			fsl,pins = <
++				MX8MQ_IOMUXC_SAI3_RXFS_GPIO4_IO28	0x16
++			>;
++		};
++
++	  pinctrl_i2c1_gt9271_io: synaptics_dsx_iogrp {
++			fsl,pins = <
++				MX8MQ_IOMUXC_GPIO1_IO08_GPIO1_IO8      0x19
++				MX8MQ_IOMUXC_SAI3_RXD_GPIO4_IO30      0x19
++			>;
++	  };
++	};
++
++};
++
++
++&i2c1 {
++	gt9271@14 {
++		compatible = "goodix,gt9271";
++		reg = <0x14>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&pinctrl_i2c1_gt9271_io>;
++		
++		interrupt-parent = <&gpio1>;
++		interrupts = <8  IRQ_TYPE_EDGE_FALLING>;
++		
++		synaptics,x-rotation;
++		synaptics,y-rotation;
++	  irq-gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;	
++		reset-gpios = <&gpio4 30 GPIO_ACTIVE_HIGH>;
++		status = "okay";
++
++	};
++
++};
++
++&pwm1 {
++	pinctrl-names = "default";
++	status = "okay";
++};
+diff --git a/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi b/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
+new file mode 100755
+index 000000000000..6cd413a15891
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
+@@ -0,0 +1,122 @@
++/{
++	lvds_backlight0: lvds_backlight@0 {
++		compatible = "pwm-backlight";
++		pwms = <&pwm1 0 5000000 0>;
++		pinctrl-0 = <&pinctrl_lvds0_pwm1>;
++		enable-gpios = <&gpio4 28 GPIO_ACTIVE_HIGH>; 
++		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
++				     10 11 12 13 14 15 16 17 18 19
++				     20 21 22 23 24 25 26 27 28 29
++				     30 31 32 33 34 35 36 37 38 39
++				     40 41 42 43 44 45 46 47 48 49
++				     50 51 52 53 54 55 56 57 58 59
++				     60 61 62 63 64 65 66 67 68 69
++				     70 71 72 73 74 75 76 77 78 79
++				     80 81 82 83 84 85 86 87 88 89
++				     90 91 92 93 94 95 96 97 98 99
++				    100>;
++		default-brightness-level = <80>;
++	};
++};
++
++
++&lcdif{
++
++	max-res = <1920>, <1080>;
++};
++&mipi_dsi_bridge{
++	panel@0 {
++		compatible = "toshiba,panel-tc358775";
++		reg = <0>;
++		pinctrl-0 = <&pinctrl_mipi_dsi_en>;
++		stby-gpio = <&gpio3 24 GPIO_ACTIVE_HIGH>;
++		reset-gpio = <&gpio4 29 GPIO_ACTIVE_HIGH>;
++		dsi-lanes = <4>;
++		panel-width-mm = <1920>;
++		panel-height-mm = <1080>;
++		
++		toshiba,debug = <1>;
++		toshiba,ppi_tx_rx_ta = <0x000A000C>;
++		toshiba,ppi_lptxtimecnt = <0x00000008>;
++		toshiba,ppi_d0s_clrsipocount = <0x0000000D>;
++		toshiba,ppi_d1s_clrsipocount = <0x0000000D>;
++		toshiba,ppi_d2s_clrsipocount = <0x0000000D>;
++		toshiba,ppi_d3s_clrsipocount = <0x0000000D>;
++		toshiba,ppi_laneenable = <0x0000001f>; 
++		toshiba,dsi_laneenable = <0x0000001f>; 
++		toshiba,ppi_sartppi = <0x00000001>; 
++		toshiba,dsi_sartppi = <0x00000001>;
++		
++		toshiba,vpctrl = <0x03F00100>; 
++		toshiba,htim1 = <0x001e000a>;
++		toshiba,htim2 = <0x00e60780>;
++		toshiba,vtim1 = <0x005f000A>;
++		toshiba,vtim2 = <0x00320438>;
++		toshiba,vfuen = <0x00000001>;
++		toshiba,lvphy0 = <0x00448006>;
++		toshiba,lvphy0_1 = <0x00048006>;
++		toshiba,sysrst = <0x00000004>; 
++
++		
++		toshiba,lvmx0003 = <0x03020100>;
++		toshiba,lvmx0407 = <0x08050704>;
++		toshiba,lvmx0811 = <0x0f0e0a09>;
++		toshiba,lvmx1215 = <0x100d0c0b>;
++		toshiba,lvmx1619 = <0x12111716>;
++		toshiba,lvmx2023 = <0x1b151413>;
++		toshiba,lvmx2427 = <0x061a1918>;
++		
++		toshiba,lvcfg = <0x00000433>;
++		
++		backlight = <&lvds_backlight0>;
++		client-device  = <&tc358775>;
++		
++		display-timings {
++				native-mode = <&timing0>;
++				timing0:timing0{
++					clock-frequency = <160000000>;
++					hactive = <1920>;
++					hsync-len = <10>;
++					hback-porch = <30>;
++					hfront-porch = <230>;
++					vactive = <1080>;
++					vsync-len = <10>;
++					vback-porch = <96>;
++					vfront-porch = <50>;
++					
++					vsync-active = <0>;
++					hsync-active =<0>;
++					de-active =<0>;
++					pixelclk-active =<0>;
++				};
++		};
++		
++		port {
++			panel1_in: endpoint {
++				remote-endpoint = <&mipi_dsi_bridge_out>;
++			};
++		};
++	};
++
++};
++&iomuxc {
++	imx8mq-evk {
++		pinctrl_lvds0_pwm1: lvds0pwm1grp {
++			fsl,pins = <
++				MX8MQ_IOMUXC_SAI3_RXFS_GPIO4_IO28	0x16
++				MX8MQ_IOMUXC_GPIO1_IO01_PWM1_OUT 0x19
++			>;
++		};
++
++
++	};
++
++};
++
++
++
++
++&pwm1 {
++	pinctrl-names = "default";
++	status = "okay";
++};
+diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
+index 38682dab1ec0..2383099c39ce 100755
+--- a/arch/arm64/configs/defconfig
++++ b/arch/arm64/configs/defconfig
+@@ -684,4 +684,8 @@ CONFIG_ATH10K_DEBUGFS=y
+ CONFIG_RFKILL=y
+ CONFIG_RFKILL_LEDS=y
+ CONFIG_RTC_DRV_DS1307=y
+-CONFIG_RTC_DRV_DS1307_HWMON=y
+\ No newline at end of file
++CONFIG_RTC_DRV_DS1307_HWMON=y
++CONFIG_TOUCHSCREEN_GOODIX=y
++CONFIG_INPUT_TOUCHSCREEN=y
++CONFIG_TOUCHSCREEN_PROPERTIES=y
++CONFIG_DRM_PANEL_TC358775=y
+diff --git a/drivers/gpu/drm/panel/Kconfig b/drivers/gpu/drm/panel/Kconfig
+old mode 100644
+new mode 100755
+index fa7234810dea..21eb751fac38
+--- a/drivers/gpu/drm/panel/Kconfig
++++ b/drivers/gpu/drm/panel/Kconfig
+@@ -90,4 +90,12 @@ config DRM_PANEL_RAYDIUM_RM67191
+ 	  Say Y here if you want to enable support for Raydium RM67191 FHD
+ 	  (1080x1920) DSI panel.
+ 
++config DRM_PANEL_TC358775
++	tristate "TC358775 FHD panel"
++	depends on OF
++	depends on DRM_MIPI_DSI
++	depends on BACKLIGHT_CLASS_DEVICE
++	help
++	  Say Y here if you want to enable support for  TC358775 FHD
++	  DSI panel.
+ endmenu
+diff --git a/drivers/gpu/drm/panel/Makefile b/drivers/gpu/drm/panel/Makefile
+old mode 100644
+new mode 100755
+index 5d1d85c0c7f6..cffb5d08825c
+--- a/drivers/gpu/drm/panel/Makefile
++++ b/drivers/gpu/drm/panel/Makefile
+@@ -7,3 +7,5 @@ obj-$(CONFIG_DRM_PANEL_SAMSUNG_S6E8AA0) += panel-samsung-s6e8aa0.o
+ obj-$(CONFIG_DRM_PANEL_SHARP_LQ101R1SX01) += panel-sharp-lq101r1sx01.o
+ obj-$(CONFIG_DRM_PANEL_SHARP_LS043T1LE01) += panel-sharp-ls043t1le01.o
+ obj-$(CONFIG_DRM_PANEL_RAYDIUM_RM67191) += panel-raydium-rm67191.o
++obj-$(CONFIG_DRM_PANEL_TC358775) += panel-tc358775.o
++obj-$(CONFIG_DRM_PANEL_TC358775) += tc358775_i2c.o
+diff --git a/drivers/gpu/drm/panel/panel-tc358775.c b/drivers/gpu/drm/panel/panel-tc358775.c
+new file mode 100755
+index 000000000000..221597398599
+--- /dev/null
++++ b/drivers/gpu/drm/panel/panel-tc358775.c
+@@ -0,0 +1,977 @@
++/*
++ * i.MX drm driver - Raydium MIPI-DSI panel driver
++ *
++ * Copyright (C) 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include <drm/drmP.h>
++#include <drm/drm_crtc.h>
++#include <drm/drm_mipi_dsi.h>
++#include <drm/drm_panel.h>
++#include <linux/gpio/consumer.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/regulator/consumer.h>
++#include <video/mipi_display.h>
++#include <video/of_videomode.h>
++#include <video/videomode.h>
++#include <linux/gpio.h>
++#include <linux/of_gpio.h>
++#include <linux/regmap.h>
++
++
++
++
++
++
++
++
++
++
++
++#define UPDATE(x, h, l)		(((x) << (l)) & GENMASK((h), (l)))
++
++/* DSI PHY Layer Registers */
++#define D0W_DPHYCONTTX		0x0004
++#define CLW_DPHYCONTRX		0x0020
++#define D0W_DPHYCONTRX		0x0024
++#define D1W_DPHYCONTRX		0x0028
++#define D2W_DPHYCONTRX		0x002C
++#define D3W_DPHYCONTRX		0x0030
++#define COM_DPHYCONTRX		0x0038
++#define CLW_CNTRL		0x0040
++#define D0W_CNTRL		0x0044
++#define	D1W_CNTRL		0x0048
++#define D2W_CNTRL		0x004C
++#define D3W_CNTRL		0x0050
++#define DFTMODE_CNTRL		0x0054
++/* DSI PPI Layer Registers */
++#define PPI_STARTPPI		0x0104
++#define STARTPPI		BIT(0)
++#define PPI_BUSYPPI		0x0108
++#define PPI_LINEINITCNT		0x0110
++#define PPI_LPTXTIMECNT		0x0114
++#define LPTXCNT(x)		UPDATE(x, 10, 0)
++#define PPI_LANEENABLE		0x0134
++#define L3EN			BIT(4)
++#define L2EN			BIT(3)
++#define L1EN			BIT(2)
++#define L0EN			BIT(1)
++#define CLEN			BIT(0)
++#define PPI_TX_RX_TA		0x013C
++#define TXTAGOCNT(x)		UPDATE(x, 26, 16)
++#define TXTASURECNT(x)		UPDATE(x, 10, 0)
++#define PPI_CLS_ATMR		0x0140
++#define PPI_D0S_ATMR		0x0144
++#define PPI_D1S_ATMR		0x0148
++#define PPI_D2S_ATMR		0x014C
++#define PPI_D3S_ATMR		0x0150
++#define PPI_D0S_CLRSIPOCOUNT	0x0164
++#define D0S_CLRSIPOCOUNT(x)	UPDATE(x, 5, 0)
++#define PPI_D1S_CLRSIPOCOUNT	0x0168
++#define D1S_CLRSIPOCOUNT(x)	UPDATE(x, 5, 0)
++#define PPI_D2S_CLRSIPOCOUNT	0x016C
++#define D2S_CLRSIPOCOUNT(x)	UPDATE(x, 5, 0)
++#define PPI_D3S_CLRSIPOCOUNT	0x0170
++#define D3S_CLRSIPOCOUNT(x)	UPDATE(x, 5, 0)
++#define CLS_PRE			0x0180
++#define D0S_PRE			0x0184
++#define D1S_PRE			0x0188
++#define D2S_PRE			0x018C
++#define D3S_PRE			0x0190
++#define CLS_PREP		0x01A0
++#define D0S_PREP		0x01A4
++#define D1S_PREP		0x01A8
++#define D2S_PREP		0x01AC
++#define D3S_PREP		0x01B0
++#define CLS_ZERO		0x01C0
++#define D0S_ZERO		0x01C4
++#define D1S_ZERO		0x01C8
++#define D2S_ZERO		0x01CC
++#define D3S_ZERO		0x01D0
++#define PPI_CLRFLG		0x01E0
++#define PPI_CLRSIPO		0x01E4
++#define HSTIMEOUT		0x01F0
++#define HSTIMEOUTENABLE		0x01F4
++/* DSI Protocol Layer Registers */
++#define DSI_STARTDSI		0x0204
++#define STARTDSI		BIT(0)
++#define DSI_LANEENABLE		0x0210
++#define DSI_LANESTATUS0		0x0214
++#define DSI_LANESTATUS1		0x0218
++#define DSI_INTSTATUS		0x0220
++#define DSI_INTMASK		0x0224
++#define DSI_INTCLR		0x0228
++#define DSI_LPTXTO		0x0230
++/* DSI General Registers */
++#define DSIERRCNT		0x0300
++/* DSI Application Layer Registers */
++#define APLCTRL			0x0400
++#define RDPKTLN			0x0404
++/* Video Path Configuration Registers */
++#define VPCTRL			0x0450
++#define VSDELAY(x)		UPDATE(x, 29, 20)
++#define VSPOL_ACTIVE_HIGH	BIT(19)
++#define VSPOL_ACTIVE_LOW	0
++#define DEPOL_ACTIVE_HIGH	BIT(18)
++#define DEPOL_ACTIVE_LOW	0
++#define HSPOL_ACTIVE_HIGH	BIT(17)
++#define HSPOL_ACTIVE_LOW	0
++#define OPXLFMT_MASK		BIT(8)
++#define OPXLFMT_RGB888		BIT(8)
++#define OPXLFMT_RGB666		0
++#define HTIM1			0x0454
++#define HBPR(x)			UPDATE(x, 24, 16)
++#define HPW(x)			UPDATE(x, 8, 0)
++#define HTIM2			0x0458
++#define HFPR(x)			UPDATE(x, 24, 16)
++#define HACT(x)			UPDATE(x, 10, 0)
++#define VTIM1			0x045C
++#define VBPR(x)			UPDATE(x, 23, 16)
++#define VPW(x)			UPDATE(x, 7, 0)
++#define VTIM2			0x0460
++#define VFPR(x)			UPDATE(x, 23, 16)
++#define VACT(x)			UPDATE(x, 10, 0)
++#define VFUEN			0x0464
++#define UPLOAD_ENABLE		BIT(0)
++#define LVMX0003		0x0480
++#define LVMX0407		0x0484
++#define LVMX0811		0x0488
++#define LVMX1215		0x048C
++#define LVMX1619		0x0490
++#define LVMX2023		0x0494
++#define LVMX2427		0x0498
++/* LVDS Configuration Registers */
++#define LVCFG			0x049C
++#define PCLKSEL(x)		UPDATE(x, 11, 10)
++#define PCLKDIV(x)		UPDATE(x, 7, 4)
++#define LVDILINK_DUAL_LINK	BIT(1)
++#define LVDILINK_SINGLE_LINK	0
++#define LVEN_ENABLE		BIT(0)
++#define LVDU_ENABLE(x)     UPDATE(x,1,1)
++#define LVEN_DISABLE		0
++#define LVPHY0			0x04A0
++#define LV_RST_MASK		BIT(22)
++#define LV_RST_RESET		BIT(22)
++#define LV_RST_NORMAL		0
++#define LV_PRBS_ON(x)    UPDATE(x, 20, 16)
++#define LV_IS_MASK		GENMASK(15, 14)
++#define LV_IS(x)		UPDATE(x, 15, 14)
++#define LV_FS_MASK		GENMASK(6, 5)
++#define LV_FS(x)		UPDATE(x, 6, 5)
++#define LV_ND_MASK		GENMASK(4, 0)
++#define LV_ND(x)		UPDATE(x, 4, 0)
++#define LVPHY1			0x04A4
++/* System Registers */
++#define SYSSTAT			0x0500
++#define SYSRST			0x0504
++#define RSTLCD			BIT(2)
++/* GPIO Registers */
++#define GPIOC			0x0520
++#define GPIOO			0x0524
++#define GPIOI			0x0528
++/* I2C Registers */
++#define I2CTIMCTRL		0x0540
++#define I2CMEN_ENABLE		BIT(24)
++#define I2CMEN_DISABLE		0
++#define I2CMADDR		0x0544
++#define WDATAQ			0x0548
++#define RDATAQ			0x054A
++/* Chip ID/Revision Registers */
++#define IDREG			0x0580
++/* Debug Registers */
++#define DEBUG00			0x05A0
++#define DEBUG01			0x05A4
++#define DEBUG02			0x05A8
++#define TC358775_MAX_REGISTER	DEBUG02
++
++ /* Input muxing for registers LVMX0003...LVMX2427 */
++ enum {
++	 INPUT_R0,
++	 INPUT_R1,
++	 INPUT_R2,
++	 INPUT_R3,
++	 INPUT_R4,
++	 INPUT_R5,
++	 INPUT_R6,
++	 INPUT_R7,
++	 INPUT_G0,
++	 INPUT_G1,
++	 INPUT_G2,
++	 INPUT_G3,
++	 INPUT_G4,
++	 INPUT_G5,
++	 INPUT_G6,
++	 INPUT_G7,
++	 INPUT_B0,
++	 INPUT_B1,
++	 INPUT_B2,
++	 INPUT_B3,
++	 INPUT_B4,
++	 INPUT_B5,
++	 INPUT_B6,
++	 INPUT_B7,
++	 INPUT_HSYNC,
++	 INPUT_VSYNC,
++	 INPUT_DE,
++	 LOGIC_0,
++ };
++
++typedef struct tc358775_configure{
++	u32 ppi_tx_rx_ta;
++	u32 ppi_lptxtimecnt;
++	u32 ppi_d0s_clrsipocount;
++	u32 ppi_d1s_clrsipocount;
++	u32 ppi_d2s_clrsipocount;
++	u32 ppi_d3s_clrsipocount;
++	u32 ppi_laneenable;
++	u32 dsi_laneenable;
++	u32 ppi_sartppi;
++	u32 dsi_sartppi;
++
++	u32 vpctrl;
++	u32 htim1;
++	u32 htim2;
++	u32 vtim1;
++	u32 vtim2;
++	u32 vfuen;
++	u32 lvphy0;
++	u32 lvphy0_1;
++	u32 sysrst;
++
++	u32 lvmx0003;
++	u32 lvmx0407;
++	u32 lvmx0811;
++	u32 lvmx1215;
++	u32 lvmx1619;
++	u32 lvmx2023;
++	u32 lvmx2427;
++	
++	u32 lvcfg;
++}tc358775_configure_st;
++
++#define INPUT_MUX(lvmx03, lvmx02, lvmx01, lvmx00)	\
++	 (UPDATE(lvmx03, 29, 24) | UPDATE(lvmx02, 20, 16) |  \
++	  UPDATE(lvmx01, 12, 8) | UPDATE(lvmx00, 4, 0))
++
++
++#if 1
++ static const struct display_timing tc358775_default_timing = {
++	.pixelclock = { 68000000, 70000000, 80000000 },
++	.hactive = { 1280, 1280, 1280 },
++	.hfront_porch = { 100, 100, 100 },
++	.hsync_len = { 8, 8, 8 },
++	.hback_porch = { 45, 45, 45 },
++	.vactive = { 800, 800, 800 },
++	.vfront_porch = { 4, 4, 4 },
++	.vsync_len = { 1, 1, 1 },
++	.vback_porch = { 4, 4, 4 },
++
++
++
++
++ 
++	 .flags = DISPLAY_FLAGS_HSYNC_LOW |
++		  DISPLAY_FLAGS_VSYNC_LOW |
++		  DISPLAY_FLAGS_DE_LOW |
++		  DISPLAY_FLAGS_PIXDATA_NEGEDGE,
++ };
++
++#else
++ static const struct display_timing tc358775_default_timing = {
++		//.pixelclock = { 66000000, 120000000, 132000000 },
++		.pixelclock = { 66000000, 160000000, 182000000 },
++		//.pixelclock = { 80000000, 148500000, 158500000 },
++			.hactive = { 1920, 1920, 1920 },
++			.hsync_len = { 10, 10, 10 },
++			.hback_porch = { 30, 30, 30},
++			.hfront_porch = { 230, 230, 230 },
++			
++			.vactive = { 1080, 1080, 1080 },	
++			.vsync_len = { 10, 10, 10},
++			.vback_porch = { 96, 96, 96},
++			.vfront_porch = { 50, 50, 50},
++
++ 
++	 .flags = DISPLAY_FLAGS_HSYNC_LOW |
++		  DISPLAY_FLAGS_VSYNC_LOW |
++		  DISPLAY_FLAGS_DE_LOW |
++		  DISPLAY_FLAGS_PIXDATA_NEGEDGE,
++ };
++
++
++ #endif
++ struct tc358775_panel {
++	 struct drm_panel base;
++	 struct mipi_dsi_device *dsi;
++ 
++	 struct gpio_desc *stby;
++	 struct gpio_desc *reset;
++ 
++	 bool prepared;
++	 bool enabled;
++
++
++ 	 struct backlight_device *backlight;
++	
++	 struct videomode vm;
++	 u32 width_mm;
++	 u32 height_mm;
++	 struct device *dev;
++	 struct i2c_client *client;
++	 struct regmap *regmap;
++	 tc358775_configure_st tc35775_cfg;
++	 
++ };
++
++ static bool tc358775_volatile_reg(struct device *dev, unsigned int reg);
++ static bool tc358775_readable_reg(struct device *dev, unsigned int reg);
++ static bool tc358775_writeable_reg(struct device *dev, unsigned int reg);
++ static void tc358775_configure(struct tc358775_panel *tc);
++
++ struct regmap_config tc358775_regmap_config = {
++	.name = "tc358775",
++	.reg_bits = 16,
++	.val_bits = 32,
++	.reg_stride = 4,
++	.max_register = TC358775_MAX_REGISTER,
++	.writeable_reg = tc358775_writeable_reg,
++	.readable_reg = tc358775_readable_reg,
++	.volatile_reg = tc358775_volatile_reg,
++	.cache_type = REGCACHE_RBTREE,
++	.reg_format_endian = REGMAP_ENDIAN_BIG,
++	.val_format_endian = REGMAP_ENDIAN_LITTLE,
++};
++
++
++
++static bool tc358775_volatile_reg(struct device *dev, unsigned int reg)
++{
++	switch (reg) {
++	case PPI_BUSYPPI:
++	case DSI_LANESTATUS0:
++	case DSI_LANESTATUS1:
++	case DSI_INTSTATUS:
++	case SYSSTAT:
++		return true;
++	default:
++		return false;
++	}
++}
++
++static bool tc358775_readable_reg(struct device *dev, unsigned int reg)
++{
++	switch (reg) {
++	case DSI_INTCLR:
++	case SYSRST:
++	case WDATAQ:
++	case RDATAQ:
++		return false;
++	default:
++		return true;
++	}
++}
++
++static bool tc358775_writeable_reg(struct device *dev, unsigned int reg)
++{
++	switch (reg) {
++	case DSI_LPTXTO:
++	case GPIOI:
++	case IDREG:
++		return false;
++	default:
++		return true;
++	}
++}
++
++
++
++
++
++
++
++
++static void tc358775_configure(struct tc358775_panel *tc)
++{
++	struct mipi_dsi_device *dsi = tc->dsi;
++	u32 idreg, pclksel = 0, pclkdiv = 0;
++	u32 lvis = 1, lvfs = 0, lvnd = 6, vsdelay = 5, lv_prbs_on = 4,dual_link = 0,debug = 0;
++	u32 ppi_tx_rx_ta,ppi_lptxtimecnt,ppi_d0s_clrsipocount,ppi_d1s_clrsipocount,ppi_d2s_clrsipocount,ppi_d3s_clrsipocount;
++	u8 chipid, revid;
++	int ret;
++
++	/* make sure in LP mode */
++	ret = mipi_dsi_dcs_nop(dsi);
++	if (ret) {
++		return ret;
++	}
++
++	/* Disable I2C Master function */
++	regmap_write(tc->regmap, I2CTIMCTRL, I2CMEN_DISABLE);
++
++	/* Chip ID and Revision */
++	regmap_read(tc->regmap, IDREG, &idreg);
++	chipid = (idreg >> 8) & 0xff;
++	revid = idreg & 0xff;
++	printk("Chip ID: %02x, Revision ID: %02x\n", chipid, revid);
++	memset(&tc->tc35775_cfg,0,sizeof(tc358775_configure_st));
++	ret = of_property_read_u32(tc->dev->of_node, "toshiba,ppi_tx_rx_ta", &tc->tc35775_cfg.ppi_tx_rx_ta);
++	of_property_read_u32(tc->dev->of_node, "toshiba,ppi_lptxtimecnt", &tc->tc35775_cfg.ppi_lptxtimecnt);
++	of_property_read_u32(tc->dev->of_node, "toshiba,ppi_d0s_clrsipocount", &tc->tc35775_cfg.ppi_d0s_clrsipocount);
++	of_property_read_u32(tc->dev->of_node, "toshiba,ppi_d1s_clrsipocount", &tc->tc35775_cfg.ppi_d1s_clrsipocount);
++	of_property_read_u32(tc->dev->of_node, "toshiba,ppi_d2s_clrsipocount", &tc->tc35775_cfg.ppi_d2s_clrsipocount);
++	of_property_read_u32(tc->dev->of_node, "toshiba,ppi_d3s_clrsipocount", &tc->tc35775_cfg.ppi_d3s_clrsipocount);
++	of_property_read_u32(tc->dev->of_node, "toshiba,ppi_laneenable", &tc->tc35775_cfg.ppi_laneenable);
++	of_property_read_u32(tc->dev->of_node, "toshiba,dsi_laneenable", &tc->tc35775_cfg.dsi_laneenable);
++	of_property_read_u32(tc->dev->of_node, "toshiba,ppi_sartppi", &tc->tc35775_cfg.ppi_sartppi);
++	of_property_read_u32(tc->dev->of_node, "toshiba,dsi_sartppi", &tc->tc35775_cfg.dsi_sartppi);
++
++	of_property_read_u32(tc->dev->of_node, "toshiba,vpctrl", &tc->tc35775_cfg.vpctrl);
++	of_property_read_u32(tc->dev->of_node, "toshiba,htim1", &tc->tc35775_cfg.htim1);
++	of_property_read_u32(tc->dev->of_node, "toshiba,htim2", &tc->tc35775_cfg.htim2);
++	of_property_read_u32(tc->dev->of_node, "toshiba,vtim1", &tc->tc35775_cfg.vtim1);
++	of_property_read_u32(tc->dev->of_node, "toshiba,vtim2", &tc->tc35775_cfg.vtim2);
++	of_property_read_u32(tc->dev->of_node, "toshiba,vfuen", &tc->tc35775_cfg.vfuen);
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvphy0", &tc->tc35775_cfg.lvphy0);
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvphy0_1", &tc->tc35775_cfg.lvphy0_1);
++	of_property_read_u32(tc->dev->of_node, "toshiba,sysrst", &tc->tc35775_cfg.sysrst);
++
++
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvmx0003", &tc->tc35775_cfg.lvmx0003);
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvmx0407", &tc->tc35775_cfg.lvmx0407);
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvmx0811", &tc->tc35775_cfg.lvmx0811);
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvmx1215", &tc->tc35775_cfg.lvmx1215);
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvmx1619", &tc->tc35775_cfg.lvmx1619);
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvmx2023", &tc->tc35775_cfg.lvmx2023);
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvmx2427", &tc->tc35775_cfg.lvmx2427);
++
++	of_property_read_u32(tc->dev->of_node, "toshiba,lvcfg", &tc->tc35775_cfg.lvcfg);
++	
++	/* tc3587755 base parameter */
++
++	regmap_write(tc->regmap, PPI_TX_RX_TA , tc->tc35775_cfg.ppi_tx_rx_ta);
++	regmap_write(tc->regmap, PPI_LPTXTIMECNT, tc->tc35775_cfg.ppi_lptxtimecnt);
++	regmap_write(tc->regmap, PPI_D0S_CLRSIPOCOUNT,tc->tc35775_cfg.ppi_d0s_clrsipocount);
++	regmap_write(tc->regmap, PPI_D1S_CLRSIPOCOUNT,tc->tc35775_cfg.ppi_d1s_clrsipocount);
++	regmap_write(tc->regmap, PPI_D2S_CLRSIPOCOUNT,tc->tc35775_cfg.ppi_d2s_clrsipocount);
++	regmap_write(tc->regmap, PPI_D3S_CLRSIPOCOUNT,tc->tc35775_cfg.ppi_d3s_clrsipocount);
++	regmap_write(tc->regmap, PPI_LANEENABLE, tc->tc35775_cfg.ppi_laneenable);
++	regmap_write(tc->regmap, DSI_LANEENABLE, tc->tc35775_cfg.dsi_laneenable);
++	regmap_write(tc->regmap, PPI_STARTPPI, tc->tc35775_cfg.ppi_sartppi);
++	regmap_write(tc->regmap, DSI_STARTDSI, tc->tc35775_cfg.dsi_sartppi);
++	
++	/* tc358775 time and mode setting */
++
++	regmap_write(tc->regmap, VPCTRL, tc->tc35775_cfg.vpctrl);
++	#if 0
++	regmap_write(tc->regmap, HTIM1, HBPR(tc->vm.hback_porch) | HPW(tc->vm.hsync_len));
++	regmap_write(tc->regmap, HTIM2, HFPR(tc->vm.hfront_porch) | HACT(tc->vm.hactive));
++	regmap_write(tc->regmap, VTIM1, VBPR(tc->vm.vback_porch) | VPW(tc->vm.vsync_len));
++	regmap_write(tc->regmap, VTIM2, VFPR(tc->vm.vfront_porch) | VACT(tc->vm.vactive));
++	#else
++	regmap_write(tc->regmap, HTIM1, tc->tc35775_cfg.htim1);
++	regmap_write(tc->regmap, HTIM2, tc->tc35775_cfg.htim2);
++	regmap_write(tc->regmap, VTIM1, tc->tc35775_cfg.vtim1);
++	regmap_write(tc->regmap, VTIM2, tc->tc35775_cfg.vtim2);
++
++	#endif
++	regmap_write(tc->regmap, VFUEN, tc->tc35775_cfg.vfuen);
++	regmap_write(tc->regmap, LVPHY0, tc->tc35775_cfg.lvphy0);	
++	usleep_range(100,1000);
++	regmap_write(tc->regmap, LVPHY0, tc->tc35775_cfg.lvphy0_1);
++
++	/* Software reset for LCD controller */
++	regmap_write(tc->regmap, SYSRST, tc->tc35775_cfg.sysrst);
++
++	/* LVDS-TX Mux Input Select Control */
++	regmap_write(tc->regmap, LVMX0003, tc->tc35775_cfg.lvmx0003);
++	regmap_write(tc->regmap, LVMX0407, tc->tc35775_cfg.lvmx0407);
++	regmap_write(tc->regmap, LVMX0811, tc->tc35775_cfg.lvmx0811);
++	regmap_write(tc->regmap, LVMX1215, tc->tc35775_cfg.lvmx1215);
++	regmap_write(tc->regmap, LVMX1619, tc->tc35775_cfg.lvmx1619);
++	regmap_write(tc->regmap, LVMX2023, tc->tc35775_cfg.lvmx2023);
++	regmap_write(tc->regmap, LVMX2427, tc->tc35775_cfg.lvmx2427);
++
++	regmap_write(tc->regmap, LVCFG, tc->tc35775_cfg.lvcfg);
++#if 0
++
++	/* tc3587755 base parameter */
++	/* 10.1 */
++	regmap_write(tc->regmap, 0x013c, 0x00030005);
++	regmap_write(tc->regmap, 0x0114, 0x00000003);
++	regmap_write(tc->regmap, 0x0164, 0x00000004);
++	regmap_write(tc->regmap, 0x0168, 0x00000004);
++	regmap_write(tc->regmap, 0x016c, 0x00000004);
++	regmap_write(tc->regmap, 0x0170, 0x00000004);
++	regmap_write(tc->regmap, 0x0134, 0x0000001f);
++	regmap_write(tc->regmap, 0x0210, 0x0000001f);
++	regmap_write(tc->regmap, 0x0104, 0x00000001);
++	regmap_write(tc->regmap, 0x0204, 0x00000001);
++
++
++	/* tc358775 time and mode setting */
++	regmap_write(tc->regmap, 0x0450, 0x03F00100);
++	regmap_write(tc->regmap, 0x0454, 0x0050000A);
++	regmap_write(tc->regmap, 0x0458, 0x00460500);
++	regmap_write(tc->regmap, 0x045c, 0x000A0003);
++	regmap_write(tc->regmap, 0x0460, 0x000A0320);
++	regmap_write(tc->regmap, 0x0464, 0x00000001);
++	regmap_write(tc->regmap, 0x04a0, 0x00448006);
++	usleep_range(100,1000);
++	regmap_write(tc->regmap, 0x04a0, 0x00048006);
++	regmap_write(tc->regmap, 0x0504, 0x00000004);
++
++
++	/* tc358775 lvds color mapping setting */
++	regmap_write(tc->regmap, 0x0480, 0x03020100);
++	regmap_write(tc->regmap, 0x0484, 0x08050704);
++	regmap_write(tc->regmap, 0x0488, 0x0f0e0a09);
++	regmap_write(tc->regmap, 0x048c, 0x100d0c0b);
++	regmap_write(tc->regmap, 0x0490, 0x12111716);
++	regmap_write(tc->regmap, 0x0494, 0x1b151413);
++	regmap_write(tc->regmap, 0x0498, 0x061a1918);
++
++	/* tc358775 lvds enabel */
++	regmap_write(tc->regmap, 0x049c, 0x00000031);
++#endif
++	of_property_read_u32(tc->dev->of_node, "toshiba,debug", &debug);
++	if(debug){
++		printk("[%x] [%x]\n",PPI_TX_RX_TA,tc->tc35775_cfg.ppi_tx_rx_ta);
++		printk("[%x] [%x]\n",PPI_LPTXTIMECNT,tc->tc35775_cfg.ppi_lptxtimecnt);
++		printk("[%x] [%x]\n",PPI_D0S_CLRSIPOCOUNT,tc->tc35775_cfg.ppi_d0s_clrsipocount);
++		printk("[%x] [%x]\n",PPI_D1S_CLRSIPOCOUNT,tc->tc35775_cfg.ppi_d1s_clrsipocount);
++		printk("[%x] [%x]\n",PPI_D2S_CLRSIPOCOUNT,tc->tc35775_cfg.ppi_d2s_clrsipocount);
++		printk("[%x] [%x]\n",PPI_D3S_CLRSIPOCOUNT,tc->tc35775_cfg.ppi_d3s_clrsipocount);
++		printk("[%x] [%x]\n",PPI_LANEENABLE,tc->tc35775_cfg.ppi_laneenable);
++		printk("[%x] [%x]\n",DSI_LANEENABLE,tc->tc35775_cfg.dsi_laneenable);
++		printk("[%x] [%x]\n",PPI_STARTPPI, tc->tc35775_cfg.ppi_sartppi);
++		printk("[%x] [%x]\n",DSI_STARTDSI, tc->tc35775_cfg.dsi_sartppi);
++
++		printk("[%x] [%x]\n",VPCTRL, tc->tc35775_cfg.vpctrl);
++		printk("[%x] [%x]\n",HTIM1,  tc->tc35775_cfg.htim1);
++		printk("[%x] [%x]\n",HTIM2,  tc->tc35775_cfg.htim2);
++		printk("[%x] [%x]\n",VTIM1,  tc->tc35775_cfg.vtim1);
++		printk("[%x] [%x]\n",VTIM2,   tc->tc35775_cfg.vtim2);
++		printk("[%x] [%x]\n", VFUEN, tc->tc35775_cfg.vfuen);
++		printk("[%x] [%x]\n",LVPHY0, tc->tc35775_cfg.lvphy0);
++		printk("[%x] [%x]\n",LVPHY0, tc->tc35775_cfg.lvphy0_1);
++		printk("[%x] [%x]\n",LVCFG,tc->tc35775_cfg.lvcfg);
++	}
++
++
++
++
++
++	return ;
++}
++
++
++static inline struct tc358775_panel *to_tc358775_panel(struct drm_panel *panel)
++{
++	return container_of(panel, struct tc358775_panel, base);
++}
++
++
++static int color_format_from_dsi_format(enum mipi_dsi_pixel_format format)
++{
++	switch (format) {
++	case MIPI_DSI_FMT_RGB565:
++		return 0x55;
++	case MIPI_DSI_FMT_RGB666:
++	case MIPI_DSI_FMT_RGB666_PACKED:
++		return 0x66;
++	case MIPI_DSI_FMT_RGB888:
++		return 0x77;
++	default:
++		return 0x77; /* for backward compatibility */
++	}
++};
++
++static int tc358775_panel_prepare(struct drm_panel *panel)
++{
++	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
++	struct mipi_dsi_device *dsi = tc358775->dsi;
++	struct device *dev = &dsi->dev;
++	int ret;
++	int color_format = color_format_from_dsi_format(dsi->format);
++	if (tc358775->prepared)
++		return 0;
++    if (gpio_is_valid(tc358775->stby)) {  
++	    gpio_set_value(tc358775->stby, 1);
++		usleep_range(5000, 10000);
++
++    }
++	DRM_DEV_DEBUG_DRIVER(dev, "\n");
++
++	if (tc358775->reset != NULL) {
++		gpiod_set_value(tc358775->reset, 1);
++		usleep_range(5000, 10000);
++
++	}
++
++	tc358775_configure(tc358775);
++
++	/* Software reset */
++		ret = mipi_dsi_dcs_soft_reset(dsi);
++		if (ret < 0) {
++			DRM_DEV_ERROR(dev, "Failed to do Software Reset (%d)\n", ret);
++			goto fail;
++		}
++	
++		usleep_range(10000, 15000);
++	
++		/* Set DSI mode */
++		ret = mipi_dsi_generic_write(dsi, (u8[]){ 0xC2, 0x0B }, 2);
++		if (ret < 0) {
++			DRM_DEV_ERROR(dev, "Failed to set DSI mode (%d)\n", ret);
++			goto fail;
++		}
++		/* Set tear ON */
++		ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
++		if (ret < 0) {
++			DRM_DEV_ERROR(dev, "Failed to set tear ON (%d)\n", ret);
++			goto fail;
++		}
++		/* Set tear scanline */
++		ret = mipi_dsi_dcs_set_tear_scanline(dsi, 0x380);
++		if (ret < 0) {
++			DRM_DEV_ERROR(dev, "Failed to set tear scanline (%d)\n", ret);
++			goto fail;
++		}
++		/* Set pixel format */
++		ret = mipi_dsi_dcs_set_pixel_format(dsi, color_format);
++		DRM_DEV_DEBUG_DRIVER(dev, "Interface color format set to 0x%x\n",
++					color_format);
++		if (ret < 0) {
++			DRM_DEV_ERROR(dev, "Failed to set pixel format (%d)\n", ret);
++			goto fail;
++		}
++		/* Set display brightness */
++		ret = mipi_dsi_dcs_set_display_brightness(dsi, 0x20);
++		if (ret < 0) {
++			DRM_DEV_ERROR(dev, "Failed to set display brightness (%d)\n",
++					  ret);
++			goto fail;
++		}
++
++
++	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
++
++    
++   ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
++    if (ret < 0) {
++        DRM_DEV_ERROR(dev, "Failed to exit sleep mode (%d)\n", ret);
++        goto fail;
++    }
++    msleep(120);
++    ret = mipi_dsi_dcs_set_display_on(dsi);
++    if (ret < 0) {
++        DRM_DEV_ERROR(dev, "Failed to exit sleep mode (%d)\n", ret);
++        goto fail;
++    }
++    msleep(5);
++    //ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
++    if (ret < 0) {
++        DRM_DEV_ERROR(dev, "Failed to set tear ON (%d)\n", ret);
++        goto fail;
++       
++    }
++ 
++	tc358775->prepared = true;
++
++	return 0;
++
++fail:
++	if (tc358775->reset != NULL)
++		gpiod_set_value(tc358775->reset, 0);
++
++	return ret;
++}
++
++static int tc358775_panel_unprepare(struct drm_panel *panel)
++{
++	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
++	struct mipi_dsi_device *dsi = tc358775->dsi;
++	struct device *dev = &dsi->dev;
++
++	if (!tc358775->prepared)
++		return 0;
++
++	DRM_DEV_DEBUG_DRIVER(dev, "\n");
++
++	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
++#if 0
++	ret = mipi_dsi_dcs_set_display_off(dsi);
++	if (ret < 0)
++		DRM_DEV_ERROR(dev, "Failed to set display OFF (%d)\n", ret);
++
++	usleep_range(5000, 10000);
++
++	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
++	if (ret < 0)
++		DRM_DEV_ERROR(dev, "Failed to enter sleep mode (%d)\n", ret);
++
++	usleep_range(10000, 15000);
++
++	if (tc358775->reset != NULL) {
++		gpiod_set_value(tc358775->reset, 0);
++		usleep_range(10000, 15000);
++	}
++#endif
++	tc358775->prepared = false;
++
++	return 0;
++}
++
++static int tc358775_panel_enable(struct drm_panel *panel)
++{
++	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
++	struct device *dev = &tc358775->dsi->dev;
++
++    printk("function:%s line:%d ----------- \n",__FUNCTION__,__LINE__);
++	if (tc358775->stby)
++		return 0;
++
++	DRM_DEV_DEBUG_DRIVER(dev, "\n");
++	tc358775->backlight->props.power = FB_BLANK_UNBLANK;
++	backlight_update_status(tc358775->backlight);
++
++	tc358775->enabled = true;
++
++	return 0;
++}
++
++static int tc358775_panel_disable(struct drm_panel *panel)
++{
++	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
++	struct device *dev = &tc358775->dsi->dev;
++
++	if (!tc358775->enabled)
++		return 0;
++
++	DRM_DEV_DEBUG_DRIVER(dev, "\n");
++
++	tc358775->backlight->props.power = FB_BLANK_POWERDOWN;
++	backlight_update_status(tc358775->backlight);
++
++
++	tc358775->enabled = false;
++
++	return 0;
++}
++
++static int tc358775_panel_get_modes(struct drm_panel *panel)
++{
++	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
++	struct device *dev = &tc358775->dsi->dev;
++	struct drm_connector *connector = panel->connector;
++	struct drm_display_mode *mode;
++	u32 bus_format = MEDIA_BUS_FMT_RGB888_1X24;
++	u32 *bus_flags = &connector->display_info.bus_flags;
++	int ret;
++
++	mode = drm_mode_create(connector->dev);
++	if (!mode) {
++		DRM_DEV_ERROR(dev, "Failed to create display mode!\n");
++		return 0;
++	}
++
++	drm_display_mode_from_videomode(&tc358775->vm, mode);
++	mode->width_mm = tc358775->width_mm;
++	mode->height_mm = tc358775->height_mm;
++	connector->display_info.width_mm = tc358775->width_mm;
++	connector->display_info.height_mm = tc358775->height_mm;
++	mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
++
++	if (tc358775->vm.flags & DISPLAY_FLAGS_DE_HIGH)
++		*bus_flags |= DRM_BUS_FLAG_DE_HIGH;
++	if (tc358775->vm.flags & DISPLAY_FLAGS_DE_LOW)
++		*bus_flags |= DRM_BUS_FLAG_DE_LOW;
++	if (tc358775->vm.flags & DISPLAY_FLAGS_PIXDATA_NEGEDGE)
++		*bus_flags |= DRM_BUS_FLAG_PIXDATA_NEGEDGE;
++	if (tc358775->vm.flags & DISPLAY_FLAGS_PIXDATA_POSEDGE)
++		*bus_flags |= DRM_BUS_FLAG_PIXDATA_POSEDGE;
++
++	ret = drm_display_info_set_bus_formats(&connector->display_info,
++					       &bus_format, 1);
++	if (ret)
++		return ret;
++
++	drm_mode_probed_add(panel->connector, mode);
++
++	return 1;
++}
++
++
++
++
++
++
++
++static const struct drm_panel_funcs tc358775_panel_funcs = {
++	.prepare = tc358775_panel_prepare,
++	.unprepare = tc358775_panel_unprepare,
++	.enable = tc358775_panel_enable,
++	.disable = tc358775_panel_disable,
++	.get_modes = tc358775_panel_get_modes,
++};
++
++
++
++
++static int tc358775_panel_probe(struct mipi_dsi_device *dsi)
++{
++	struct device *dev = &dsi->dev;
++	struct device_node *np = dev->of_node;
++    struct device_node *client_node = NULL;
++	struct device_node *timings;
++	struct i2c_client *client_dev;
++	struct tc358775_panel *panel;
++	struct device_node *backlight;
++	int ret;
++	panel = devm_kzalloc(&dsi->dev, sizeof(*panel), GFP_KERNEL);
++	if (!panel)
++		return -ENOMEM;
++
++	mipi_dsi_set_drvdata(dsi, panel);
++
++	panel->dsi = dsi;
++	panel->dev = dev;
++	dsi->format = MIPI_DSI_FMT_RGB888;
++	//dsi->format = MIPI_DSI_FMT_RGB666_PACKED;
++	dsi->mode_flags = MIPI_DSI_MODE_VIDEO_BURST | MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM;
++
++	ret = of_property_read_u32(np, "dsi-lanes", &dsi->lanes);
++	if (ret < 0) {
++		dev_err(dev, "Failed to get dsi-lanes property (%d)\n", ret);
++		return ret;
++	}
++
++	
++	timings = of_get_child_by_name(np, "display-timings");
++	if (timings) {
++		of_node_put(timings);
++		ret = of_get_videomode(np, &panel->vm, 0);
++
++
++	} else {
++		videomode_from_timing(&tc358775_default_timing, &panel->vm);
++	}
++
++	of_property_read_u32(np, "panel-width-mm", &panel->width_mm);
++	of_property_read_u32(np, "panel-height-mm", &panel->height_mm);
++
++	panel->stby = devm_gpiod_get(dev,"stby", GPIOD_OUT_HIGH);
++	if (IS_ERR(panel->stby))
++		panel->stby = NULL;
++
++
++	panel->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
++
++	if (IS_ERR(panel->reset))
++		panel->reset = NULL;
++
++    client_node = of_parse_phandle(dev->of_node, "client-device", 0);
++	if (!client_node) {
++		dev_err(dev, "phandle missing or invalid\n");
++	}else{
++        client_dev = of_find_i2c_device_by_node(client_node);
++        if (!client_dev || !client_dev->dev.driver) {
++            dev_err(dev, "failed to find client platform device\n");
++        }
++        else{
++            panel->client = client_dev;
++			panel->regmap = devm_regmap_init_i2c(panel->client, &tc358775_regmap_config);
++			if (IS_ERR(panel->regmap)) {
++				ret = PTR_ERR(panel->regmap);
++				printk("Failed to initialize regmap: %d\n", ret);
++				dev_err(dev, "Failed to initialize regmap: %d\n", ret);
++				return ret;
++			}
++        }
++    }
++
++
++    
++	backlight = of_parse_phandle(dev->of_node, "backlight", 0);
++	if(backlight){
++		panel->backlight = of_find_backlight_by_node(backlight);
++		of_node_put(backlight);
++	}
++
++
++	drm_panel_init(&panel->base);
++	panel->base.funcs = &tc358775_panel_funcs;
++	panel->base.dev = dev;
++
++	ret = drm_panel_add(&panel->base);
++
++	if (ret < 0)
++		return ret;
++
++	ret = mipi_dsi_attach(dsi);
++	if (ret < 0)
++		drm_panel_remove(&panel->base);
++
++	return ret;
++}
++
++static int tc358775_panel_remove(struct mipi_dsi_device *dsi)
++{
++	struct tc358775_panel *tc358775 = mipi_dsi_get_drvdata(dsi);
++	struct device *dev = &dsi->dev;
++	int ret;
++
++	ret = tc358775_panel_disable(&tc358775->base);
++	if (ret < 0)
++		DRM_DEV_ERROR(dev, "Failed to disable panel (%d)\n", ret);
++
++	ret = mipi_dsi_detach(dsi);
++	if (ret < 0)
++		DRM_DEV_ERROR(dev, "Failed to detach from host (%d)\n",
++			ret);
++
++	drm_panel_detach(&tc358775->base);
++
++	if (tc358775->base.dev)
++		drm_panel_remove(&tc358775->base);
++
++	return 0;
++}
++
++static void tc358775_panel_shutdown(struct mipi_dsi_device *dsi)
++{
++	struct tc358775_panel *tc358775 = mipi_dsi_get_drvdata(dsi);
++
++	tc358775_panel_disable(&tc358775->base);
++}
++
++static const struct of_device_id tc358775_of_match[] = {
++	{ .compatible = "toshiba,panel-tc358775", },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, tc358775_of_match);
++
++static struct mipi_dsi_driver tc358775_panel_driver = {
++	.driver = {
++		.name = "panel-toshiba-tc358775",
++		.of_match_table = tc358775_of_match,
++	},
++	.probe = tc358775_panel_probe,
++	.remove = tc358775_panel_remove,
++	.shutdown = tc358775_panel_shutdown,
++};
++module_mipi_dsi_driver(tc358775_panel_driver);
++
++MODULE_AUTHOR("SHENZHEN HMS");
++MODULE_DESCRIPTION("TI SN65DSI8X PANEL");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/gpu/drm/panel/tc358775_i2c.c b/drivers/gpu/drm/panel/tc358775_i2c.c
+new file mode 100755
+index 000000000000..415d6ba362de
+--- /dev/null
++++ b/drivers/gpu/drm/panel/tc358775_i2c.c
+@@ -0,0 +1,245 @@
++/*
++ *
++ * Copyright 2011 Texas Instruments, Inc.
++ * Author: Archit Taneja <archit@ti.com>
++ *
++ * based on d2l panel driver by Jerry Alexander <x0135174@ti.com>
++ *
++ * This program iss free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 as published by
++ * the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details. 
++ *
++ * You should have received a copy of the GNU General Public License along with
++ * this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include <linux/module.h>
++#include <linux/debugfs.h>
++#include <linux/delay.h>
++#include <linux/err.h>
++#include <linux/jiffies.h>
++#include <linux/sched.h>
++#include <linux/seq_file.h>
++#include <linux/backlight.h>
++#include <linux/fb.h>
++#include <linux/interrupt.h>
++#include <linux/gpio.h>
++#include <linux/slab.h>
++#include <linux/regulator/consumer.h>
++#include <linux/mutex.h>
++#include <linux/i2c.h>
++#include <linux/of_device.h>
++//#include <video/omapdss.h>
++#include <video/mipi_display.h>
++//#include <omap-panel-dsi85.h>
++
++#include <drm/drm_crtc_helper.h>
++#include <drm/drm_mipi_dsi.h>
++
++
++#include <drm/drmP.h>
++#include <drm/drm_atomic.h>
++#include <drm/drm_atomic_helper.h>
++#include <drm/drm_edid.h>
++
++//#include "panel-dsi85.h"
++
++#define DSI85DEBUG
++
++static struct i2c_board_info dsi85_i2c_board_info = {
++	I2C_BOARD_INFO("dsi85_i2c_driver", 0x2d /*0x2c*/),
++};
++
++struct dsi85_i2c_data {
++	struct mutex xfer_lock;
++	struct device_node *host_node;
++	u8 channel_id;
++};
++static struct i2c_client *g_dsi85_client = NULL;
++static const struct i2c_device_id dsi85_i2c_id[] = {
++	{ "toshiba,tc358775", 0 },
++	{},
++};
++
++MODULE_DEVICE_TABLE(i2c, dsi85_i2c_id);
++
++static struct of_device_id dsi85_dt_ids[] = {
++	{ .compatible = "toshiba,tc358775", .data = NULL, },
++	{ /* sentinel */ }
++};
++
++#define LVDS_CLK_FROM_DSI_CLK  1
++
++struct dsi85_lvds_timings {
++    u16 hfp;
++    u16 hsw;
++    u16 hbp;
++    u16 vfp;
++    u16 vsw;
++    u16 vbp;
++};
++
++static struct dsi85_lvds_timings lvds_timings = {
++	.hfp = 40,
++	.hsw = 128,
++	.hbp = 40,
++	.vfp = 1,
++	.vsw = 4,
++	.vbp = 9,    
++};
++
++struct dsi85_reg {
++	/* Address and register value */
++	u8 data[10];
++	int len;
++};
++
++static void dsi85_dumpconfig(struct i2c_client *client)
++{
++	struct i2c_client *dsi85_i2c_client = client;
++	printk(KERN_INFO ">>>>>>>>>>>>>>>>>> luis' message\n");
++    int val;
++    val = i2c_smbus_read_byte_data(dsi85_i2c_client, 0x00);
++    printk("@@@@@@@@@@@@@@@@@@@ val=%d\n", val);
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x00, i2c_smbus_read_byte_data(dsi85_i2c_client, 0x00));
++
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x01, \
++	i2c_smbus_read_byte_data(dsi85_i2c_client, 0x01));
++
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x02, \
++	i2c_smbus_read_byte_data(dsi85_i2c_client, 0x02));
++	
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x03, \
++	i2c_smbus_read_byte_data(dsi85_i2c_client, 0x03));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x04, \
++	i2c_smbus_read_byte_data(dsi85_i2c_client, 0x04));
++	
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x05, \
++	i2c_smbus_read_byte_data(dsi85_i2c_client, 0x05));
++	
++
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x0D, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x0D));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x0A, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x0A));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x0B, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x0B));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x10, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x10));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x18, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x18));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x1A, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x1A));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x20, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x20));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x21, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x21));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x22, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x22));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x23, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x23));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x24, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x24));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x25, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x25));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x26, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x26));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x27, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x27));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x28, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x28));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x29, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x29));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x2A, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x2A));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x2B, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x2B));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x2C, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x2C));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x2D, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x2D));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x2E, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x2E));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x2F, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x2F));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x30, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x30));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x31, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x31));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x32, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x32));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x33, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x33));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x34, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x34));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x35, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x35));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x36, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x32));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x37, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x33));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x38, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x34));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x39, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x35));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x3A, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x35));
++	printk(KERN_INFO "DSI85-I2C: read 0x%02x  - 0x%02x\n", 0x3B, \
++		i2c_smbus_read_byte_data(dsi85_i2c_client, 0x3B));
++}
++static int dsi85_i2c_probe(struct i2c_client *client,
++		const struct i2c_device_id *id)
++{
++#if 0
++	struct dsi85_i2c_data *dsi85;
++	struct device *dev = &client->dev;
++
++	printk(KERN_INFO ">>>>>>>>>>>>>>>>>>>>>>> DSI85-I2C: Probe called!\n");
++	dsi85 = kzalloc(sizeof(struct dsi85_i2c_data), GFP_KERNEL);
++
++	if (!dsi85) {
++		printk(KERN_ERR "DSI85-I2C: memory allocation failed!\n");
++		return -ENOMEM;
++	}
++    g_dsi85_client = client;
++	mutex_init(&dsi85->xfer_lock);
++	i2c_set_clientdata(client, dsi85);
++
++   dsi85_dumpconfig(client);
++#endif
++	return 0;
++}
++
++static int dsi85_i2c_remove(struct i2c_client *client)
++{
++	struct dsi85_i2c_data *dsi85_i2c_data =
++					i2c_get_clientdata(client);
++	kfree(dsi85_i2c_data);
++	return 0;
++}
++
++static struct i2c_driver dsi85_i2c_driver = {
++	.driver = {
++		.name	= "tc358775_i2c_driver",
++		.owner = THIS_MODULE,
++		.of_match_table = dsi85_dt_ids,
++	},
++	.probe		= dsi85_i2c_probe,
++	.remove		= dsi85_i2c_remove,
++	.id_table	= dsi85_i2c_id,
++};
++
++
++
++
++
++
++module_i2c_driver(dsi85_i2c_driver);
++MODULE_AUTHOR("NXP Semiconductor");
++MODULE_DESCRIPTION("SN65DSI8X MIPI DSI to LVDS  driver");
++MODULE_LICENSE("GPL");
+-- 
+2.24.1
+

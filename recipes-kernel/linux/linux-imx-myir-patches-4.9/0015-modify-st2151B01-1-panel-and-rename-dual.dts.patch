@@ -1,0 +1,67 @@
+From ae607d71f7e5e9a119fb56bc9a9b8c92d62a2003 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Fri, 1 Mar 2019 08:39:17 +0800
+Subject: [PATCH 15/34] modify st2151B01-1 panel and rename dual.dts
+
+---
+ ...-fsl-imx8mq-evk-tc358775-dual-display.dts} |  0
+ .../boot/dts/freescale/panel-st2151B01-1.dtsi | 23 +++++++++++--------
+ 2 files changed, 13 insertions(+), 10 deletions(-)
+ rename arch/arm64/boot/dts/freescale/{myb-fsl-imx8mq-evk-dual-display.dts => myb-fsl-imx8mq-evk-tc358775-dual-display.dts} (100%)
+
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dual-display.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display.dts
+similarity index 100%
+rename from arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dual-display.dts
+rename to arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display.dts
+diff --git a/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi b/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
+index e49f6cef2cf4..7d057e4ae1b9 100755
+--- a/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
++++ b/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
+@@ -48,10 +48,10 @@
+ 		toshiba,dsi_sartppi = <0x00000001>;
+ 		
+ 		toshiba,vpctrl = <0x03F00100>; 
+-		toshiba,htim1 = <0x001e000a>;
+-		toshiba,htim2 = <0x00e60780>;
+-		toshiba,vtim1 = <0x005f000A>;
+-		toshiba,vtim2 = <0x00320438>;
++		toshiba,htim1 = <0x005a000a>;
++		toshiba,htim2 = <0x00820780>;
++		toshiba,vtim1 = <0x0028000A>;
++		toshiba,vtim2 = <0x00500438>;
+ 		toshiba,vfuen = <0x00000001>;
+ 		toshiba,lvphy0 = <0x00448006>;
+ 		toshiba,lvphy0_1 = <0x00048006>;
+@@ -74,20 +74,23 @@
+ 		display-timings {
+ 				native-mode = <&timing0>;
+ 				timing0:timing0{
+-					clock-frequency = <160000000>;
++					clock-frequency = <148500000>;
+ 					hactive = <1920>;
+-					hsync-len = <10>;
+-					hback-porch = <30>;
+-					hfront-porch = <230>;
++					hsync-len = <9>;
++					hback-porch = <91>;
++					hfront-porch = <130>;
+ 					vactive = <1080>;
+ 					vsync-len = <10>;
+-					vback-porch = <96>;
+-					vfront-porch = <50>;
++					vback-porch = <41>;
++					vfront-porch = <80>;
+ 					
+ 					vsync-active = <0>;
+ 					hsync-active =<0>;
+ 					de-active =<0>;
+ 					pixelclk-active =<0>;
++				
++					
++
+ 				};
+ 		};
+ 		
+-- 
+2.24.1
+

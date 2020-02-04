@@ -1,0 +1,30 @@
+From a3f2ff4c4ad5cd620a86eab07b5a70539063c1a4 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Fri, 1 Mar 2019 08:43:34 +0800
+Subject: [PATCH 16/34] Industrial cpu -40~105 ,but mtu 0~125 when cpu
+ temperature under 0 ,it will over 105 and reboot,remove orderly_poweroff
+
+---
+ drivers/thermal/thermal_core.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 drivers/thermal/thermal_core.c
+
+diff --git a/drivers/thermal/thermal_core.c b/drivers/thermal/thermal_core.c
+old mode 100644
+new mode 100755
+index 226b0b4aced6..8d00bfc01c04
+--- a/drivers/thermal/thermal_core.c
++++ b/drivers/thermal/thermal_core.c
+@@ -446,7 +446,8 @@ static void handle_critical_trips(struct thermal_zone_device *tz,
+ 		dev_emerg(&tz->device,
+ 			  "critical temperature reached(%d C),shutting down\n",
+ 			  tz->temperature / 1000);
+-		orderly_poweroff(true);
++		/* Industrial cpu -40 ~105 ,tmu 0~125 */
++		//orderly_poweroff(true);
+ 	}
+ }
+ 
+-- 
+2.24.1
+

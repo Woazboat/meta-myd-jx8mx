@@ -1,0 +1,134 @@
+From 17b8c78f5f3f9d0b47586e269fb2d95e838a68b2 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Fri, 22 Feb 2019 08:41:02 +0800
+Subject: [PATCH 14/34] modify panel pwm and add dual play dts
+
+---
+ .../myb-fsl-imx8mq-evk-dual-display.dts       | 87 +++++++++++++++++++
+ .../boot/dts/freescale/panel-ATK-10-1.dtsi    |  2 +-
+ .../boot/dts/freescale/panel-st2151B01-1.dtsi |  2 +-
+ 3 files changed, 89 insertions(+), 2 deletions(-)
+ create mode 100755 arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dual-display.dts
+
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dual-display.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dual-display.dts
+new file mode 100755
+index 000000000000..5d5342a128b9
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-dual-display.dts
+@@ -0,0 +1,87 @@
++/*
++ * Copyright 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include "myb-fsl-imx8mq-evk.dts"
++//#include "panel-ATK-10-1.dtsi"
++#include "panel-st2151B01-1.dtsi"
++
++&lcdif {
++	status = "okay";
++
++	assigned-clocks = <&clk IMX8MQ_CLK_LCDIF_PIXEL_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rate = <120000000>,
++			      <0>,
++			      <599999999>;
++	
++	port@0 {
++		lcdif_mipi_dsi: mipi-dsi-endpoint {
++			remote-endpoint = <&mipi_dsi_in>;
++		};
++	};
++};
++
++&mipi_dsi_phy {
++	status = "okay";
++};
++
++&mipi_dsi {
++	status = "okay";
++	as_bridge;
++	sync-pol = <1>;
++	pwr-delay = <10>;
++
++	port@1 {
++		mipi_dsi_in: endpoint {
++			remote-endpoint = <&lcdif_mipi_dsi>;
++		};
++	};
++};
++
++&mipi_dsi_bridge {
++	status = "okay";
++
++
++	port@1 {
++		mipi_dsi_bridge_out: endpoint {
++			remote-endpoint = <&panel1_in>;
++		};
++	};
++};
++
++&iomuxc {
++	imx8mq-evk {
++		pinctrl_mipi_dsi_en: mipi_dsi_en {
++			fsl,pins = <
++				MX8MQ_IOMUXC_SAI5_RXD3_GPIO3_IO24 0x16
++				MX8MQ_IOMUXC_SAI3_RXC_GPIO4_IO29	0x16
++				
++			>;
++		};
++
++	};
++};
++
++&i2c1 {
++	tc358775:tc358775@0x0f{
++		compatible = "toshiba,tc358775";
++		reg  = <0x0f>;
++		status = "okay";
++	};
++};
++
++
+diff --git a/arch/arm64/boot/dts/freescale/panel-ATK-10-1.dtsi b/arch/arm64/boot/dts/freescale/panel-ATK-10-1.dtsi
+index b65edbcf2317..398c9b19e3aa 100755
+--- a/arch/arm64/boot/dts/freescale/panel-ATK-10-1.dtsi
++++ b/arch/arm64/boot/dts/freescale/panel-ATK-10-1.dtsi
+@@ -1,7 +1,7 @@
+ /{
+ 	lvds_backlight0: lvds_backlight@0 {
+ 		compatible = "pwm-backlight";
+-		pwms = <&pwm1 0 5000000 0>;
++		pwms = <&pwm1 0 5000000 >;
+ 		pinctrl-0 = <&pinctrl_lvds0_pwm1>;
+ 		enable-gpios = <&gpio4 28 GPIO_ACTIVE_HIGH>; 
+ 		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
+diff --git a/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi b/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
+index e5db25d370ec..e49f6cef2cf4 100755
+--- a/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
++++ b/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
+@@ -1,7 +1,7 @@
+ /{
+ 	lvds_backlight0: lvds_backlight@0 {
+ 		compatible = "pwm-backlight";
+-		pwms = <&pwm1 0 5000000 0>;
++		pwms = <&pwm1 0 5000000 >;
+ 		pinctrl-0 = <&pinctrl_lvds0_pwm1>;
+ 		enable-gpios = <&gpio4 28 GPIO_ACTIVE_HIGH>; 
+ 		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
+-- 
+2.24.1
+

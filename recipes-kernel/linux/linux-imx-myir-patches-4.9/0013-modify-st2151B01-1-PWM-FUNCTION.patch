@@ -1,0 +1,35 @@
+From d40cba4c747baf2f8678fa02663884cc3db8d1b5 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Wed, 20 Feb 2019 10:29:51 +0800
+Subject: [PATCH 13/34] modify st2151B01-1 PWM FUNCTION
+
+---
+ arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi b/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
+index 6cd413a15891..e5db25d370ec 100755
+--- a/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
++++ b/arch/arm64/boot/dts/freescale/panel-st2151B01-1.dtsi
+@@ -104,6 +104,11 @@
+ 		pinctrl_lvds0_pwm1: lvds0pwm1grp {
+ 			fsl,pins = <
+ 				MX8MQ_IOMUXC_SAI3_RXFS_GPIO4_IO28	0x16
++				
++			>;
++		};
++		pinctrl_pwm1: lvds0pwm1grp {
++			fsl,pins = <
+ 				MX8MQ_IOMUXC_GPIO1_IO01_PWM1_OUT 0x19
+ 			>;
+ 		};
+@@ -118,5 +123,6 @@
+ 
+ &pwm1 {
+ 	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_pwm1>;
+ 	status = "okay";
+ };
+-- 
+2.24.1
+

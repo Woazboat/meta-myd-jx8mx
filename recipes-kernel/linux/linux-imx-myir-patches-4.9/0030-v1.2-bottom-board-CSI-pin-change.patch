@@ -1,0 +1,220 @@
+From d9464ad32a9790130a6795d79b7e8d451354f68c Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Sat, 1 Jun 2019 19:06:22 +0800
+Subject: [PATCH 30/34] v1.2 bottom board CSI pin change
+
+---
+ .../boot/dts/freescale/myb-fsl-imx8mq-evk.dts | 26 ++------
+ .../platform/mxc/capture/ov5640_mipi_v3.c     | 65 ++++---------------
+ 2 files changed, 20 insertions(+), 71 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk.dts
+index 1bad8ee6e4c7..17160c26a1bb 100755
+--- a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk.dts
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk.dts
+@@ -209,13 +209,13 @@
+ 				MX8MQ_IOMUXC_SPDIF_TX_GPIO5_IO3 0x16
+ 				MX8MQ_IOMUXC_SPDIF_RX_GPIO5_IO4 0x16
+ 				MX8MQ_IOMUXC_SPDIF_EXT_CLK_GPIO5_IO5 0x16
+-				MX8MQ_IOMUXC_GPIO1_IO06_GPIO1_IO6		0x19         /* CSI_nRST */
+ 				MX8MQ_IOMUXC_GPIO1_IO15_CCMSRCGPCMIX_CLKO2	0x59   /* CLKO2 */
+ 			>;
+ 		};
+ 
+ 		pinctrl_csi1: csi1grp {
+ 			fsl,pins = <
++				MX8MQ_IOMUXC_GPIO1_IO06_GPIO1_IO6		0x19         /* CSI_nRST */
+ 				MX8MQ_IOMUXC_SAI3_MCLK_GPIO5_IO2 0x16             /* CSI_P1_IO1 */
+ 				MX8MQ_IOMUXC_GPIO1_IO03_GPIO1_IO3		0x19          /* CSI_P1_PWDN */
+ 
+@@ -223,6 +223,7 @@
+ 		};
+ 		pinctrl_csi2: csi2grp {
+ 			fsl,pins = <
++				MX8MQ_IOMUXC_SAI5_RXD1_GPIO3_IO22 0x19
+ 				MX8MQ_IOMUXC_SAI3_TXC_GPIO5_IO0 0x16             /* CSI_P2_IO1 */
+ 				MX8MQ_IOMUXC_GPIO1_IO05_GPIO1_IO5		0x19         /* CSI_P2_PWDN */
+ 
+@@ -463,17 +464,7 @@
+ 			>;
+ 		};
+ 
+-		pinctrl_sai5: sai5grp {
+-			fsl,pins = <
+-				MX8MQ_IOMUXC_SAI5_MCLK_SAI5_MCLK	0xd6
+-				MX8MQ_IOMUXC_SAI5_RXC_SAI5_RX_BCLK	0xd6
+-				MX8MQ_IOMUXC_SAI5_RXFS_SAI5_RX_SYNC	0xd6
+-				MX8MQ_IOMUXC_SAI5_RXD0_SAI5_RX_DATA0	0xd6
+-				MX8MQ_IOMUXC_SAI5_RXD1_SAI5_RX_DATA1    0xd6
+-				MX8MQ_IOMUXC_SAI5_RXD2_SAI5_RX_DATA2    0xd6
+-				MX8MQ_IOMUXC_SAI5_RXD3_SAI5_RX_DATA3    0xd6
+-			>;
+-		};
++
+ 
+     pinctrl_leds: ledgrp {
+ 			fsl,pins = <
+@@ -756,7 +747,7 @@
+ 		csi_id = <0>;
+ 		gate-gpios = <&gpio5 0 GPIO_ACTIVE_HIGH>;
+ 		pwn-gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+-		rst-gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
++		rst-gpios = <&gpio3 22 GPIO_ACTIVE_LOW>;
+ 		mclk = <24000000>;
+ 		mclk_source = <0>;
+ 		port {
+@@ -937,13 +928,8 @@
+ 
+ &sai5 {
+ 	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_sai5>;
+-	assigned-clocks = <&clk IMX8MQ_CLK_SAI5_SRC>,
+-			<&clk IMX8MQ_CLK_SAI5_DIV>;
+-	assigned-clock-parents = <&clk IMX8MQ_AUDIO_PLL1_OUT>;
+-	assigned-clock-rates = <0>, <49152000>;
+-	fsl,sai-asynchronous;
+-	status = "okay";
++
++	status = "disabled";
+ };
+ 
+ 
+diff --git a/drivers/media/platform/mxc/capture/ov5640_mipi_v3.c b/drivers/media/platform/mxc/capture/ov5640_mipi_v3.c
+index b8ed5799daf9..cea688238152 100755
+--- a/drivers/media/platform/mxc/capture/ov5640_mipi_v3.c
++++ b/drivers/media/platform/mxc/capture/ov5640_mipi_v3.c
+@@ -141,10 +141,7 @@ struct ov5640_res ov5640_valid_res[] = {
+ 	[3] = {1920, 1080},
+ 	[4] = {2592, 1944},
+ };
+-struct ov5640_gpio_t{
+-	int pwn;
+-	int rst;
+-}ov5640_gpio[2]={0};
++
+ static int init_value = 0;
+ struct ov5640 *sensor = NULL;
+ 
+@@ -472,21 +469,7 @@ static inline void ov5640_power_down(struct ov5640 *sensor, int enable)
+ 
+ 	msleep(2);
+ }
+-static inline void ov5640_dual_power_down(int enable)
+-{
+-	if (ov5640_gpio[1].pwn < 0)
+-		return;
+ 
+-	if (!enable){
+-		gpio_set_value_cansleep(ov5640_gpio[0].pwn, 0);
+-		gpio_set_value_cansleep(ov5640_gpio[1].pwn, 0);
+-	}
+-	else{
+-		gpio_set_value_cansleep(ov5640_gpio[0].pwn, 1);
+-		gpio_set_value_cansleep(ov5640_gpio[1].pwn, 1);
+-	}
+-	msleep(2);
+-}
+ 
+ 
+ 
+@@ -495,33 +478,18 @@ static void ov5640_reset(struct ov5640 *sensor)
+ {
+ 	gpio_set_value_cansleep(sensor->pwn_gpio, 1);
+ 	gpio_set_value_cansleep(sensor->rst_gpio, 0);
+-	printk("set pwn 1 rst 0\n");
++//	printk("set pwn 1 rst 0\n");
+ 	msleep(5);
+ 	gpio_set_value_cansleep(sensor->pwn_gpio, 0);
+-	printk("set pwn 0\n");
++//	printk("set pwn 0\n");
+ 	msleep(1);
+ 
+ 	gpio_set_value_cansleep(sensor->rst_gpio, 1);
+ 	msleep(20);
+-	printk("set rst 1\n");
++//	printk("set rst 1\n");
+ }
+ 
+-static void ov5640_dual_reset(void)
+-{
+-	gpio_set_value_cansleep(ov5640_gpio[0].pwn, 1);
+-	gpio_set_value_cansleep(ov5640_gpio[1].pwn, 1);
+-	gpio_set_value_cansleep(ov5640_gpio[0].rst, 0);
+-	printk("set dual pwn 1 rst 0\n");
+-	msleep(5);
+-	gpio_set_value_cansleep(ov5640_gpio[0].pwn, 0);
+-	gpio_set_value_cansleep(ov5640_gpio[1].pwn, 0);
+-	printk("set dual pwn 0\n");
+-	msleep(1);
+ 
+-	gpio_set_value_cansleep(ov5640_gpio[0].rst, 1);
+-	msleep(20);
+-	printk("set dual rst 1\n");
+-}
+ 
+ 
+ static void ov5640_per_reset(struct ov5640 *sensor)
+@@ -1716,7 +1684,7 @@ static int ov5640_probe(struct i2c_client *client,
+ 			return retval;
+ 		}
+ 	}
+-	ov5640_gpio[init_value].pwn=sensor[init_value].pwn_gpio;
++	
+ 	/* request reset pin */
+ 	sensor[init_value].rst_gpio = of_get_named_gpio(dev->of_node, "rst-gpios", 0);
+ 	if (!gpio_is_valid(sensor[init_value].rst_gpio))
+@@ -1726,11 +1694,11 @@ static int ov5640_probe(struct i2c_client *client,
+ 				GPIOF_OUT_INIT_HIGH, "ov5640_mipi_reset");
+ 		if (retval < 0) {
+ 			dev_warn(dev, "Failed to set reset pin\n");
+-		//	return retval;
++			return retval;
+ 		}
+ 	}
+ 
+-	ov5640_gpio[init_value].rst=sensor[init_value].rst_gpio;
++
+ 
+ 	sensor[init_value].sensor_clk = devm_clk_get(dev, "csi_mclk");
+ 	if (IS_ERR(sensor[init_value].sensor_clk)) {
+@@ -1777,30 +1745,25 @@ static int ov5640_probe(struct i2c_client *client,
+ 	sensor[init_value].streamcap.timeperframe.denominator = DEFAULT_FPS;
+ 	sensor[init_value].streamcap.timeperframe.numerator = 1;
+ 
+-	if(init_value == 0){
+-		init_value++;
+-		return 0;
+-	}
++	
+ 
+-	clk_prepare_enable(sensor[init_value-1].sensor_clk);
+ 	clk_prepare_enable(sensor[init_value].sensor_clk);
+ 
+-	ov5640_regulator_enable(&sensor[init_value-1].i2c_client->dev);
+ 
+ 	ov5640_regulator_enable(&sensor[init_value].i2c_client->dev);
+ 
+ 	mutex_lock(&ov5640_mutex);
+ 	{
+-		ov5640_dual_reset();
+-		ov5640_dual_power_down(0);
++		ov5640_reset(&sensor[init_value]);
++		ov5640_power_down(&sensor[init_value],0);
+ 
+ 	}
+ 	mutex_unlock(&ov5640_mutex);
+ 
+-	for(num = 0 ; num <= init_value; num++){
+-		retval = ov5640_model_init(sensor+num);
+-	}
+-
++	
++	retval = ov5640_model_init(&sensor[init_value]);
++	
++	init_value++;
+ 	return retval;
+ }
+ 
+-- 
+2.24.1
+

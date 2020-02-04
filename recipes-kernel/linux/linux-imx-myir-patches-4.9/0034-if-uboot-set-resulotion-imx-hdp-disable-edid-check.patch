@@ -1,0 +1,49 @@
+From 8fd697d2f3ea3fd333b3c18dc52efbafb080ac33 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Thu, 29 Aug 2019 17:31:20 +0800
+Subject: [PATCH 34/34] if uboot set resulotion , imx-hdp disable edid check
+
+---
+ drivers/gpu/drm/imx/hdp/imx-hdp.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 drivers/gpu/drm/imx/hdp/imx-hdp.c
+
+diff --git a/drivers/gpu/drm/imx/hdp/imx-hdp.c b/drivers/gpu/drm/imx/hdp/imx-hdp.c
+old mode 100644
+new mode 100755
+index 5bb7fecd69b7..f643ddfa6551
+--- a/drivers/gpu/drm/imx/hdp/imx-hdp.c
++++ b/drivers/gpu/drm/imx/hdp/imx-hdp.c
+@@ -20,6 +20,7 @@
+ #include <linux/of.h>
+ #include <linux/irq.h>
+ #include <linux/of_device.h>
++#include <asm/setup.h>
+ 
+ #include "imx-hdp.h"
+ #include "imx-hdmi.h"
+@@ -27,7 +28,7 @@
+ #include "../imx-drm.h"
+ 
+ struct drm_display_mode *g_mode;
+-
++extern char __initdata boot_command_line[COMMAND_LINE_SIZE];
+ static struct drm_display_mode edid_cea_modes[] = {
+ 	/* 3 - 720x480@60Hz */
+ 	{ DRM_MODE("720x480", DRM_MODE_TYPE_DRIVER, 27000, 720, 736,
+@@ -1045,6 +1046,12 @@ static int imx_hdp_imx_bind(struct device *dev, struct device *master,
+ 	hdp->bpc = 8;
+ 	hdp->format = PXL_RGB;
+ 
++
++	if(strstr(boot_command_line,"video=")){
++		pr_notice("uboot set resolution force!!\n");
++		hdp->is_edid = false;
++	}
++
+ 	/* HDP controller init */
+ 	imx_hdp_state_init(hdp);
+ 
+-- 
+2.24.1
+

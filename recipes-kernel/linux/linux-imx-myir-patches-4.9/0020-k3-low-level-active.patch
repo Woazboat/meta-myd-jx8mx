@@ -1,0 +1,25 @@
+From 6ed8d73f78af3ab67fb2da0931d2004c292a568f Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Thu, 4 Apr 2019 09:50:21 +0800
+Subject: [PATCH 20/34] k3 low level active
+
+---
+ arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk.dts
+index b2653072ed8e..1bad8ee6e4c7 100755
+--- a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk.dts
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk.dts
+@@ -177,7 +177,7 @@
+ 
+ 		user {
+ 			label = "User k3 Button";
+-			gpios = <&gpio3 13 GPIO_ACTIVE_HIGH>;
++			gpios = <&gpio3 13 GPIO_ACTIVE_LOW>;
+ 			gpio-key,wakeup;
+ 			linux,code = <KEY_1>;
+ 		};
+-- 
+2.24.1
+

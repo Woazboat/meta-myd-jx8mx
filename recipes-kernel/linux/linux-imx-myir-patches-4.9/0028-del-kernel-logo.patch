@@ -1,0 +1,24 @@
+From 1b9b1ce4935009b5fd95b1183f722874ae75ec9a Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Thu, 30 May 2019 16:58:32 +0800
+Subject: [PATCH 28/34] del kernel logo
+
+---
+ arch/arm64/configs/defconfig | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
+index da2bf9210fb2..0ad166a5337e 100755
+--- a/arch/arm64/configs/defconfig
++++ b/arch/arm64/configs/defconfig
+@@ -394,7 +394,6 @@ CONFIG_FB_MXC_DISP_FRAMEWORK=y
+ CONFIG_BACKLIGHT_GENERIC=m
+ CONFIG_BACKLIGHT_PWM=y
+ CONFIG_BACKLIGHT_LP855X=m
+-CONFIG_LOGO=y
+ # CONFIG_LOGO_LINUX_MONO is not set
+ # CONFIG_LOGO_LINUX_VGA16 is not set
+ CONFIG_SOUND=y
+-- 
+2.24.1
+

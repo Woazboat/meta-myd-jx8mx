@@ -1,0 +1,52 @@
+From 0b4f6943482b0675eb9eec83db9279510ef393c3 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Wed, 29 May 2019 18:58:21 +0800
+Subject: [PATCH 26/34] modify 19 inch screen like as taianhe
+
+---
+ ...nel-taihean.dtsi => panel-M190ETN01-lcdif.dtsi} | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+ rename arch/arm64/boot/dts/freescale/{panel-taihean.dtsi => panel-M190ETN01-lcdif.dtsi} (93%)
+
+diff --git a/arch/arm64/boot/dts/freescale/panel-taihean.dtsi b/arch/arm64/boot/dts/freescale/panel-M190ETN01-lcdif.dtsi
+similarity index 93%
+rename from arch/arm64/boot/dts/freescale/panel-taihean.dtsi
+rename to arch/arm64/boot/dts/freescale/panel-M190ETN01-lcdif.dtsi
+index 66e9d8691d63..62e9506c71e1 100755
+--- a/arch/arm64/boot/dts/freescale/panel-taihean.dtsi
++++ b/arch/arm64/boot/dts/freescale/panel-M190ETN01-lcdif.dtsi
+@@ -48,8 +48,8 @@
+ 		toshiba,dsi_sartppi = <0x00000001>;
+ 		
+ 		toshiba,vpctrl = <0x03F00100>; 
+-		toshiba,htim1 = <0x00A00020>;
+-		toshiba,htim2 = <0x00300500>;
++		toshiba,htim1 = <0x00c8001c>;
++		toshiba,htim2 = <0x00b40500>;
+ 		toshiba,vtim1 = <0x001E0007>;
+ 		toshiba,vtim2 = <0x00030400>;
+ 		toshiba,vfuen = <0x00000001>;
+@@ -74,15 +74,15 @@
+ 		display-timings {
+ 				native-mode = <&timing0>;
+ 				timing0:timing0{
+-					clock-frequency = <91500000>;
++					clock-frequency = <108000000>;
+ 					hactive = <1280>;
+-					hsync-len = <32>;
+-					hback-porch = <160>;
+-					hfront-porch = <48>;
++					hsync-len = <28>;
++					hback-porch = <200>;
++					hfront-porch = <180>;
+ 					vactive = <1023>;
+ 					vsync-len = <7>;
+ 					vback-porch = <30>;
+-					vfront-porch = <3>;
++					vfront-porch = <5>;
+ 					
+ 					vsync-active = <0>;
+ 					hsync-active =<0>;
+-- 
+2.24.1
+

@@ -1,0 +1,504 @@
+From 5e0b7ab632e152b8534d167261f6f990c8eb05f1 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Fri, 31 May 2019 15:20:44 +0800
+Subject: [PATCH 29/34] add different screnn lcdif and dual dtb
+
+---
+ arch/arm64/boot/dts/freescale/Makefile        |   6 +-
+ .../myb-fsl-imx8mq-evk-lcdif-tc358775-10.dts  | 120 ++++++++++++++++++
+ .../myb-fsl-imx8mq-evk-lcdif-tc358775-19.dts  | 119 +++++++++++++++++
+ ...sl-imx8mq-evk-tc358775-dual-display-10.dts | 102 +++++++++++++++
+ ...sl-imx8mq-evk-tc358775-dual-display-19.dts | 102 +++++++++++++++
+ 5 files changed, 448 insertions(+), 1 deletion(-)
+ create mode 100755 arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775-10.dts
+ create mode 100755 arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775-19.dts
+ create mode 100755 arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display-10.dts
+ create mode 100755 arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display-19.dts
+
+diff --git a/arch/arm64/boot/dts/freescale/Makefile b/arch/arm64/boot/dts/freescale/Makefile
+index fc2e3f95b753..1e66fae79ed3 100755
+--- a/arch/arm64/boot/dts/freescale/Makefile
++++ b/arch/arm64/boot/dts/freescale/Makefile
+@@ -63,7 +63,11 @@ dtb-$(CONFIG_ARCH_FSL_IMX8MQ) += fsl-imx8mq-ddr3l-arm2.dtb \
+ 				 myb-fsl-imx8mq-evk.dtb \
+ 				 myb-fsl-imx8mq-evk-lcdif-tc358775.dtb \
+ 				 myb-fsl-imx8mq-evk-dcss-tc358775.dtb \
+-				 myb-fsl-imx8mq-evk-tc358775-dual-display.dtb
++				 myb-fsl-imx8mq-evk-tc358775-dual-display.dtb \
++				 myb-fsl-imx8mq-evk-lcdif-tc358775-10.dtb \
++				 myb-fsl-imx8mq-evk-lcdif-tc358775-19.dtb \
++				 myb-fsl-imx8mq-evk-tc358775-dual-display-10.dtb \
++				 myb-fsl-imx8mq-evk-tc358775-dual-display-19.dtb
+ 
+ always		:= $(dtb-y)
+ subdir-y	:= $(dts-dirs)
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775-10.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775-10.dts
+new file mode 100755
+index 000000000000..17b07faf6e52
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775-10.dts
+@@ -0,0 +1,120 @@
++/*
++ * Copyright 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include "myb-fsl-imx8mq-evk.dts"
++#include "panel-ATK-10-1-lcdif.dtsi"
++
++
++/ {
++	display-subsystem {
++		status = "disabled";
++	};
++	sound-hdmi {
++		status = "disabled";
++	};
++};
++
++&irqsteer_dcss {
++	status = "disabled";
++};
++
++&dcss {
++	status = "disabled";
++};
++
++&hdmi {
++	status = "disabled";
++};
++
++
++
++&lcdif {
++	status = "okay";
++
++	assigned-clocks = <&clk IMX8MQ_CLK_LCDIF_PIXEL_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rate = <120000000>,
++			      <0>,
++			      <599999999>;
++	
++	port@0 {
++		lcdif_mipi_dsi: mipi-dsi-endpoint {
++			remote-endpoint = <&mipi_dsi_in>;
++		};
++	};
++};
++
++&mipi_dsi_phy {
++	status = "okay";
++};
++
++&mipi_dsi {
++	status = "okay";
++	as_bridge;
++	sync-pol = <1>;
++	assigned-clocks = <&clk IMX8MQ_CLK_DSI_PHY_REF_SRC>,
++			  <&clk IMX8MQ_CLK_DSI_CORE_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_SYS1_PLL_266M>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rates = <24000000>,
++			       <266000000>,
++			       <0>,
++			       <599999999>;
++
++	port@1 {
++		mipi_dsi_in: endpoint {
++			remote-endpoint = <&lcdif_mipi_dsi>;
++		};
++	};
++};
++
++&mipi_dsi_bridge {
++	status = "okay";
++
++
++	port@1 {
++		mipi_dsi_bridge_out: endpoint {
++			remote-endpoint = <&panel1_in>;
++		};
++	};
++};
++
++&iomuxc {
++	imx8mq-evk {
++		pinctrl_mipi_dsi_en: mipi_dsi_en {
++			fsl,pins = <
++				MX8MQ_IOMUXC_SAI5_RXD3_GPIO3_IO24 0x16
++				MX8MQ_IOMUXC_SAI3_RXC_GPIO4_IO29	0x16
++				
++			>;
++		};
++
++	};
++};
++
++&i2c1 {
++	tc358775:tc358775@0x0f{
++		compatible = "toshiba,tc358775";
++		reg  = <0x0f>;
++		status = "okay";
++	};
++};
++
++
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775-19.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775-19.dts
+new file mode 100755
+index 000000000000..2597b3fa8e28
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-lcdif-tc358775-19.dts
+@@ -0,0 +1,119 @@
++/*
++ * Copyright 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include "myb-fsl-imx8mq-evk.dts"
++#include "panel-M190ETN01-lcdif.dtsi"
++
++/ {
++	display-subsystem {
++		status = "disabled";
++	};
++	sound-hdmi {
++		status = "disabled";
++	};
++};
++
++&irqsteer_dcss {
++	status = "disabled";
++};
++
++&dcss {
++	status = "disabled";
++};
++
++&hdmi {
++	status = "disabled";
++};
++
++
++
++&lcdif {
++	status = "okay";
++
++	assigned-clocks = <&clk IMX8MQ_CLK_LCDIF_PIXEL_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rate = <120000000>,
++			      <0>,
++			      <599999999>;
++	
++	port@0 {
++		lcdif_mipi_dsi: mipi-dsi-endpoint {
++			remote-endpoint = <&mipi_dsi_in>;
++		};
++	};
++};
++
++&mipi_dsi_phy {
++	status = "okay";
++};
++
++&mipi_dsi {
++	status = "okay";
++	as_bridge;
++	sync-pol = <1>;
++	assigned-clocks = <&clk IMX8MQ_CLK_DSI_PHY_REF_SRC>,
++			  <&clk IMX8MQ_CLK_DSI_CORE_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_SYS1_PLL_266M>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rates = <24000000>,
++			       <266000000>,
++			       <0>,
++			       <599999999>;
++
++	port@1 {
++		mipi_dsi_in: endpoint {
++			remote-endpoint = <&lcdif_mipi_dsi>;
++		};
++	};
++};
++
++&mipi_dsi_bridge {
++	status = "okay";
++
++
++	port@1 {
++		mipi_dsi_bridge_out: endpoint {
++			remote-endpoint = <&panel1_in>;
++		};
++	};
++};
++
++&iomuxc {
++	imx8mq-evk {
++		pinctrl_mipi_dsi_en: mipi_dsi_en {
++			fsl,pins = <
++				MX8MQ_IOMUXC_SAI5_RXD3_GPIO3_IO24 0x16
++				MX8MQ_IOMUXC_SAI3_RXC_GPIO4_IO29	0x16
++				
++			>;
++		};
++
++	};
++};
++
++&i2c1 {
++	tc358775:tc358775@0x0f{
++		compatible = "toshiba,tc358775";
++		reg  = <0x0f>;
++		status = "okay";
++	};
++};
++
++
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display-10.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display-10.dts
+new file mode 100755
+index 000000000000..22b503a577e8
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display-10.dts
+@@ -0,0 +1,102 @@
++/*
++ * Copyright 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include "myb-fsl-imx8mq-evk.dts"
++#include "panel-ATK-10-1-lcdif.dtsi"
++
++
++&lcdif {
++	status = "okay";
++
++	assigned-clocks = <&clk IMX8MQ_CLK_LCDIF_PIXEL_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rate = <120000000>,
++			      <0>,
++			      <599999999>;
++	
++	
++	port@0 {
++		lcdif_mipi_dsi: mipi-dsi-endpoint {
++			remote-endpoint = <&mipi_dsi_in>;
++		};
++	};
++	
++};
++
++&mipi_dsi_phy {
++	status = "okay";
++};
++
++&mipi_dsi {
++	status = "okay";
++	as_bridge;
++	sync-pol = <1>;
++	pwr-delay = <50>;
++	assigned-clocks = <&clk IMX8MQ_CLK_DSI_PHY_REF_SRC>,
++			  <&clk IMX8MQ_CLK_DSI_CORE_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_SYS1_PLL_266M>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rates = <24000000>,
++			       <266000000>,
++			       <0>,
++			       <599999999>;
++
++
++	port@1 {
++		mipi_dsi_in: endpoint {
++			remote-endpoint = <&lcdif_mipi_dsi>;
++		};
++	};
++	
++};
++
++&mipi_dsi_bridge {
++	status = "okay";
++
++
++	port@1 {
++		mipi_dsi_bridge_out: endpoint {
++			remote-endpoint = <&panel1_in>;
++		};
++	};
++};
++
++&iomuxc {
++	imx8mq-evk {
++		pinctrl_mipi_dsi_en: mipi_dsi_en {
++			fsl,pins = <
++				MX8MQ_IOMUXC_SAI5_RXD3_GPIO3_IO24 0x16
++				MX8MQ_IOMUXC_SAI3_RXC_GPIO4_IO29	0x16
++				
++			>;
++		};
++
++	};
++};
++
++&i2c1 {
++	tc358775:tc358775@0x0f{
++		compatible = "toshiba,tc358775";
++		reg  = <0x0f>;
++		status = "okay";
++	};
++};
++
++
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display-19.dts b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display-19.dts
+new file mode 100755
+index 000000000000..4ef4e03d41bd
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq-evk-tc358775-dual-display-19.dts
+@@ -0,0 +1,102 @@
++/*
++ * Copyright 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include "myb-fsl-imx8mq-evk.dts"
++#include "panel-M190ETN01-lcdif.dtsi"
++
++
++&lcdif {
++	status = "okay";
++
++	assigned-clocks = <&clk IMX8MQ_CLK_LCDIF_PIXEL_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rate = <120000000>,
++			      <0>,
++			      <599999999>;
++	
++	
++	port@0 {
++		lcdif_mipi_dsi: mipi-dsi-endpoint {
++			remote-endpoint = <&mipi_dsi_in>;
++		};
++	};
++	
++};
++
++&mipi_dsi_phy {
++	status = "okay";
++};
++
++&mipi_dsi {
++	status = "okay";
++	as_bridge;
++	sync-pol = <1>;
++	pwr-delay = <50>;
++	assigned-clocks = <&clk IMX8MQ_CLK_DSI_PHY_REF_SRC>,
++			  <&clk IMX8MQ_CLK_DSI_CORE_SRC>,
++			  <&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
++			  <&clk IMX8MQ_VIDEO_PLL1>;
++	assigned-clock-parents = <&clk IMX8MQ_VIDEO_PLL1_OUT>,
++				 <&clk IMX8MQ_SYS1_PLL_266M>,
++				 <&clk IMX8MQ_CLK_25M>;
++	assigned-clock-rates = <24000000>,
++			       <266000000>,
++			       <0>,
++			       <599999999>;
++
++
++	port@1 {
++		mipi_dsi_in: endpoint {
++			remote-endpoint = <&lcdif_mipi_dsi>;
++		};
++	};
++	
++};
++
++&mipi_dsi_bridge {
++	status = "okay";
++
++
++	port@1 {
++		mipi_dsi_bridge_out: endpoint {
++			remote-endpoint = <&panel1_in>;
++		};
++	};
++};
++
++&iomuxc {
++	imx8mq-evk {
++		pinctrl_mipi_dsi_en: mipi_dsi_en {
++			fsl,pins = <
++				MX8MQ_IOMUXC_SAI5_RXD3_GPIO3_IO24 0x16
++				MX8MQ_IOMUXC_SAI3_RXC_GPIO4_IO29	0x16
++				
++			>;
++		};
++
++	};
++};
++
++&i2c1 {
++	tc358775:tc358775@0x0f{
++		compatible = "toshiba,tc358775";
++		reg  = <0x0f>;
++		status = "okay";
++	};
++};
++
++
+-- 
+2.24.1
+

@@ -1,0 +1,842 @@
+From d1292f43c2ab2b278dfb5cd746fe9436f75ef02a Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Wed, 10 Apr 2019 19:03:34 +0800
+Subject: [PATCH 21/34] revert 6507266728a7806d850ce22ec923d90cf4aa4318 to
+ 5e23f9d6114784d77fd4ed5848953356c3575532
+
+---
+ arch/arm/boot/dts/imx7ulp-evk-sd1.dts         |   1 -
+ arch/arm/boot/dts/imx7ulp-evk.dts             |   3 +-
+ arch/arm/configs/imx_v7_defconfig             |   2 -
+ arch/arm/include/asm/cp15.h                   |   2 -
+ arch/arm/mm/Kconfig                           |  17 ---
+ arch/arm/mm/fault.c                           |  25 ----
+ arch/arm/mm/fsr-2level.c                      |   4 +-
+ arch/arm/mm/fsr-3level.c                      |  69 ---------
+ arch/arm/mm/proc-v7-2level.S                  |   4 +-
+ arch/arm/mm/proc-v7-3level.S                  |   5 -
+ arch/arm/mm/proc-v7.S                         |  30 +---
+ .../dts/freescale/fsl-imx8qm-lpddr4-arm2.dts  |  12 +-
+ .../boot/dts/freescale/fsl-imx8qm-mek.dts     |  10 +-
+ .../dts/freescale/fsl-imx8qxp-lpddr4-arm2.dts |   6 +-
+ .../boot/dts/freescale/fsl-imx8qxp-mek.dts    |   6 +-
+ arch/arm64/configs/defconfig                  |  16 +-
+ drivers/irqchip/irq-imx-irqsteer.c            |   7 +-
+ drivers/mxc/gpu-viv/Kbuild                    |   4 -
+ .../mxc/gpu-viv/hal/kernel/inc/gc_hal_vg.h    |   8 +
+ .../hal/os/linux/kernel/gc_hal_kernel_os.c    | 138 ++++++++++++++++++
+ .../freescale/gc_hal_kernel_platform_imx.c    |  12 +-
+ drivers/net/wireless/bcmdhd/wl_cfg80211.c     |   5 -
+ .../net/wireless/bcmdhd_1363/wl_cfg80211.c    |   5 -
+ 23 files changed, 181 insertions(+), 210 deletions(-)
+
+diff --git a/arch/arm/boot/dts/imx7ulp-evk-sd1.dts b/arch/arm/boot/dts/imx7ulp-evk-sd1.dts
+index f213bd7f731b..18e8f5911d87 100644
+--- a/arch/arm/boot/dts/imx7ulp-evk-sd1.dts
++++ b/arch/arm/boot/dts/imx7ulp-evk-sd1.dts
+@@ -39,6 +39,5 @@
+ 	/delete-property/pm-ignore-notify;
+ 	/delete-property/keep-power-in-suspend;
+ 	/delete-property/non-removable;
+-	/delete-property/no-1-8-v;
+ 	status = "okay";
+ };
+diff --git a/arch/arm/boot/dts/imx7ulp-evk.dts b/arch/arm/boot/dts/imx7ulp-evk.dts
+index 054ce54e1beb..0be1684dfd9f 100644
+--- a/arch/arm/boot/dts/imx7ulp-evk.dts
++++ b/arch/arm/boot/dts/imx7ulp-evk.dts
+@@ -416,13 +416,14 @@
+ 		focaltech,reset-gpio = <&gpio_ptf 1 0x01>;
+ 		focaltech,irq-gpio = <&gpio_ptf 0 0x02>;
+ 		focaltech,max-touch-number = <5>;
+-		focaltech,display-coords =  <0 0 480 854>;
++		focaltech,display-coords =  <0 0 272 480>;
+ 
+ 		focaltech,have-key;
+ 		focaltech,key-number = <3>;
+ 		focaltech,keys = <139 102 158>;
+ 		focaltech,key-y-coord = <2000>;
+ 		focaltech,key-x-coords = <200 600 800>;
++		focaltech,scaling-down-half;
+ 	};
+ };
+ 
+diff --git a/arch/arm/configs/imx_v7_defconfig b/arch/arm/configs/imx_v7_defconfig
+index 854106381bd3..d62f287413d6 100644
+--- a/arch/arm/configs/imx_v7_defconfig
++++ b/arch/arm/configs/imx_v7_defconfig
+@@ -83,7 +83,6 @@ CONFIG_BT_HCIBCM203X=y
+ CONFIG_BT_ATH3K=y
+ CONFIG_CFG80211=y
+ CONFIG_NL80211_TESTMODE=y
+-CONFIG_CFG80211_INTERNAL_REGDB=y
+ CONFIG_CFG80211_WEXT=y
+ CONFIG_MAC80211=y
+ CONFIG_DEVTMPFS=y
+@@ -127,7 +126,6 @@ CONFIG_SCSI_SCAN_ASYNC=y
+ # CONFIG_SCSI_LOWLEVEL is not set
+ CONFIG_ATA=y
+ CONFIG_SATA_AHCI_PLATFORM=y
+-CONFIG_AHCI_IMX=y
+ CONFIG_PATA_IMX=y
+ CONFIG_NETDEVICES=y
+ # CONFIG_NET_VENDOR_BROADCOM is not set
+diff --git a/arch/arm/include/asm/cp15.h b/arch/arm/include/asm/cp15.h
+index 0672ddc7654f..dbdbce1b3a72 100644
+--- a/arch/arm/include/asm/cp15.h
++++ b/arch/arm/include/asm/cp15.h
+@@ -64,8 +64,6 @@
+ #define __write_sysreg(v, r, w, c, t)	asm volatile(w " " c : : "r" ((t)(v)))
+ #define write_sysreg(v, ...)		__write_sysreg(v, __VA_ARGS__)
+ 
+-#define BPIALL				__ACCESS_CP15(c7, 0, c5, 6)
+-
+ extern unsigned long cr_alignment;	/* defined in entry-armv.S */
+ 
+ static inline unsigned long get_cr(void)
+diff --git a/arch/arm/mm/Kconfig b/arch/arm/mm/Kconfig
+index 4ce1fcc4aa3f..aa7d512aaffc 100644
+--- a/arch/arm/mm/Kconfig
++++ b/arch/arm/mm/Kconfig
+@@ -1068,20 +1068,3 @@ config DEBUG_ALIGN_RODATA
+ 	  additional section-aligned split of rodata from kernel text so it
+ 	  can be made explicitly non-executable. This padding may waste memory
+ 	  space to gain the additional protection.
+-
+-config HARDEN_BRANCH_PREDICTOR
+-	bool "Harden the branch predictor against aliasing attacks" if EXPERT
+-	default y
+-	help
+-	  Speculation attacks against some high-performance processors rely on
+-	  being able to manipulate the branch predictor for a victim context by
+-	  executing aliasing branches in the attacker context.  Such attacks
+-	  can be partially mitigated against by clearing internal branch
+-	  predictor state and limiting the prediction logic in some situations.
+-
+-	  This config option will take CPU-specific actions to harden the
+-	  branch predictor against aliasing attacks and may rely on specific
+-	  instruction sequences or control bits being set by the system
+-	  firmware.
+-
+-	  If unsure, say Y.
+diff --git a/arch/arm/mm/fault.c b/arch/arm/mm/fault.c
+index 17fd0c7ae95b..f7861dc83182 100644
+--- a/arch/arm/mm/fault.c
++++ b/arch/arm/mm/fault.c
+@@ -20,7 +20,6 @@
+ #include <linux/highmem.h>
+ #include <linux/perf_event.h>
+ 
+-#include <asm/cp15.h>
+ #include <asm/exception.h>
+ #include <asm/pgtable.h>
+ #include <asm/system_misc.h>
+@@ -396,36 +395,12 @@ do_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
+ 	__do_kernel_fault(mm, addr, fsr, regs);
+ 	return 0;
+ }
+-
+-static int __maybe_unused
+-do_pabt_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
+-{
+-#ifdef CONFIG_HARDEN_BRANCH_PREDICTOR
+-	if (addr > TASK_SIZE) {
+-		switch (read_cpuid_part()) {
+-		case ARM_CPU_PART_CORTEX_A8:
+-		case ARM_CPU_PART_CORTEX_A9:
+-		case ARM_CPU_PART_CORTEX_A12:
+-		case ARM_CPU_PART_CORTEX_A17:
+-			write_sysreg(0, BPIALL);
+-			break;
+-		}
+-	}
+-#endif
+-	return do_page_fault(addr, fsr, regs);
+-}
+ #else					/* CONFIG_MMU */
+ static int
+ do_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
+ {
+ 	return 0;
+ }
+-
+-static int
+-do_pabt_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
+-{
+-	return 0;
+-}
+ #endif					/* CONFIG_MMU */
+ 
+ /*
+diff --git a/arch/arm/mm/fsr-2level.c b/arch/arm/mm/fsr-2level.c
+index 4cede9bc7722..18ca74c0f341 100644
+--- a/arch/arm/mm/fsr-2level.c
++++ b/arch/arm/mm/fsr-2level.c
+@@ -50,7 +50,7 @@ static struct fsr_info ifsr_info[] = {
+ 	{ do_bad,		SIGBUS,  0,		"unknown 4"			   },
+ 	{ do_translation_fault,	SIGSEGV, SEGV_MAPERR,	"section translation fault"	   },
+ 	{ do_bad,		SIGSEGV, SEGV_ACCERR,	"page access flag fault"	   },
+-	{ do_pabt_page_fault,	SIGSEGV, SEGV_MAPERR,	"page translation fault"	   },
++	{ do_page_fault,	SIGSEGV, SEGV_MAPERR,	"page translation fault"	   },
+ 	{ do_bad,		SIGBUS,	 0,		"external abort on non-linefetch"  },
+ 	{ do_bad,		SIGSEGV, SEGV_ACCERR,	"section domain fault"		   },
+ 	{ do_bad,		SIGBUS,  0,		"unknown 10"			   },
+@@ -58,7 +58,7 @@ static struct fsr_info ifsr_info[] = {
+ 	{ do_bad,		SIGBUS,	 0,		"external abort on translation"	   },
+ 	{ do_sect_fault,	SIGSEGV, SEGV_ACCERR,	"section permission fault"	   },
+ 	{ do_bad,		SIGBUS,	 0,		"external abort on translation"	   },
+-	{ do_pabt_page_fault,	SIGSEGV, SEGV_ACCERR,	"page permission fault"		   },
++	{ do_page_fault,	SIGSEGV, SEGV_ACCERR,	"page permission fault"		   },
+ 	{ do_bad,		SIGBUS,  0,		"unknown 16"			   },
+ 	{ do_bad,		SIGBUS,  0,		"unknown 17"			   },
+ 	{ do_bad,		SIGBUS,  0,		"unknown 18"			   },
+diff --git a/arch/arm/mm/fsr-3level.c b/arch/arm/mm/fsr-3level.c
+index 2745f7f31c21..ab4409a2307e 100644
+--- a/arch/arm/mm/fsr-3level.c
++++ b/arch/arm/mm/fsr-3level.c
+@@ -65,73 +65,4 @@ static struct fsr_info fsr_info[] = {
+ 	{ do_bad,		SIGBUS,  0,		"unknown 63"			},
+ };
+ 
+-#ifdef CONFIG_HARDEN_BRANCH_PREDICTOR
+-static struct fsr_info ifsr_info[] = {
+-	{ do_bad,		SIGBUS,  0,		"unknown 0"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 1"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 2"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 3"			},
+-	{ do_bad,		SIGBUS,  0,		"reserved translation fault"	},
+-	{ do_translation_fault,	SIGSEGV, SEGV_MAPERR,	"level 1 translation fault"	},
+-	{ do_translation_fault,	SIGSEGV, SEGV_MAPERR,	"level 2 translation fault"	},
+-	{ do_pabt_page_fault,	SIGSEGV, SEGV_MAPERR,	"level 3 translation fault"	},
+-	{ do_bad,		SIGBUS,  0,		"reserved access flag fault"	},
+-	{ do_bad,		SIGSEGV, SEGV_ACCERR,	"level 1 access flag fault"	},
+-	{ do_pabt_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 2 access flag fault"	},
+-	{ do_pabt_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 3 access flag fault"	},
+-	{ do_bad,		SIGBUS,  0,		"reserved permission fault"	},
+-	{ do_bad,		SIGSEGV, SEGV_ACCERR,	"level 1 permission fault"	},
+-	{ do_pabt_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 2 permission fault"	},
+-	{ do_pabt_page_fault,	SIGSEGV, SEGV_ACCERR,	"level 3 permission fault"	},
+-	{ do_bad,		SIGBUS,  0,		"synchronous external abort"	},
+-	{ do_bad,		SIGBUS,  0,		"asynchronous external abort"	},
+-	{ do_bad,		SIGBUS,  0,		"unknown 18"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 19"			},
+-	{ do_bad,		SIGBUS,  0,		"synchronous abort (translation table walk)" },
+-	{ do_bad,		SIGBUS,  0,		"synchronous abort (translation table walk)" },
+-	{ do_bad,		SIGBUS,  0,		"synchronous abort (translation table walk)" },
+-	{ do_bad,		SIGBUS,  0,		"synchronous abort (translation table walk)" },
+-	{ do_bad,		SIGBUS,  0,		"synchronous parity error"	},
+-	{ do_bad,		SIGBUS,  0,		"asynchronous parity error"	},
+-	{ do_bad,		SIGBUS,  0,		"unknown 26"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 27"			},
+-	{ do_bad,		SIGBUS,  0,		"synchronous parity error (translation table walk" },
+-	{ do_bad,		SIGBUS,  0,		"synchronous parity error (translation table walk" },
+-	{ do_bad,		SIGBUS,  0,		"synchronous parity error (translation table walk" },
+-	{ do_bad,		SIGBUS,  0,		"synchronous parity error (translation table walk" },
+-	{ do_bad,		SIGBUS,  0,		"unknown 32"			},
+-	{ do_bad,		SIGBUS,  BUS_ADRALN,	"alignment fault"		},
+-	{ do_bad,		SIGBUS,  0,		"debug event"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 35"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 36"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 37"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 38"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 39"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 40"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 41"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 42"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 43"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 44"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 45"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 46"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 47"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 48"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 49"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 50"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 51"			},
+-	{ do_bad,		SIGBUS,  0,		"implementation fault (lockdown abort)" },
+-	{ do_bad,		SIGBUS,  0,		"unknown 53"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 54"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 55"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 56"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 57"			},
+-	{ do_bad,		SIGBUS,  0,		"implementation fault (coprocessor abort)" },
+-	{ do_bad,		SIGBUS,  0,		"unknown 59"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 60"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 61"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 62"			},
+-	{ do_bad,		SIGBUS,  0,		"unknown 63"			},
+-};
+-#else
+ #define ifsr_info	fsr_info
+-#endif
+diff --git a/arch/arm/mm/proc-v7-2level.S b/arch/arm/mm/proc-v7-2level.S
+index 0422e58b74e8..c6141a5435c3 100644
+--- a/arch/arm/mm/proc-v7-2level.S
++++ b/arch/arm/mm/proc-v7-2level.S
+@@ -41,7 +41,7 @@
+  *	even on Cortex-A8 revisions not affected by 430973.
+  *	If IBE is not set, the flush BTAC/BTB won't do anything.
+  */
+-ENTRY(cpu_v7_btbinv_switch_mm)
++ENTRY(cpu_ca8_switch_mm)
+ #ifdef CONFIG_MMU
+ 	mov	r2, #0
+ 	mcr	p15, 0, r2, c7, c5, 6		@ flush BTAC/BTB
+@@ -66,7 +66,7 @@ ENTRY(cpu_v7_switch_mm)
+ #endif
+ 	bx	lr
+ ENDPROC(cpu_v7_switch_mm)
+-ENDPROC(cpu_v7_btbinv_switch_mm)
++ENDPROC(cpu_ca8_switch_mm)
+ 
+ /*
+  *	cpu_v7_set_pte_ext(ptep, pte)
+diff --git a/arch/arm/mm/proc-v7-3level.S b/arch/arm/mm/proc-v7-3level.S
+index a25450b79c14..5e5720e8bc5f 100644
+--- a/arch/arm/mm/proc-v7-3level.S
++++ b/arch/arm/mm/proc-v7-3level.S
+@@ -54,10 +54,6 @@
+  * Set the translation table base pointer to be pgd_phys (physical address of
+  * the new TTB).
+  */
+-ENTRY(cpu_v7_btbinv_switch_mm)
+-#ifdef CONFIG_MMU
+-	mcr	p15, 0, r0, c7, c5, 6			@ flush BTAC/BTB
+-#endif
+ ENTRY(cpu_v7_switch_mm)
+ #ifdef CONFIG_MMU
+ 	mmid	r2, r2
+@@ -68,7 +64,6 @@ ENTRY(cpu_v7_switch_mm)
+ #endif
+ 	ret	lr
+ ENDPROC(cpu_v7_switch_mm)
+-ENDPROC(cpu_v7_btbinv_switch_mm)
+ 
+ #ifdef __ARMEB__
+ #define rl r3
+diff --git a/arch/arm/mm/proc-v7.S b/arch/arm/mm/proc-v7.S
+index ff7018a03ec8..d00d52c9de3e 100644
+--- a/arch/arm/mm/proc-v7.S
++++ b/arch/arm/mm/proc-v7.S
+@@ -163,7 +163,6 @@ ENDPROC(cpu_v7_do_resume)
+ 	globl_equ	cpu_ca8_dcache_clean_area, cpu_v7_dcache_clean_area
+ 	globl_equ	cpu_ca8_set_pte_ext,	cpu_v7_set_pte_ext
+ 	globl_equ	cpu_ca8_suspend_size,	cpu_v7_suspend_size
+-	globl_equ	cpu_ca8_switch_mm,	cpu_v7_btbinv_switch_mm
+ #ifdef CONFIG_ARM_CPU_SUSPEND
+ 	globl_equ	cpu_ca8_do_suspend,	cpu_v7_do_suspend
+ 	globl_equ	cpu_ca8_do_resume,	cpu_v7_do_resume
+@@ -177,11 +176,7 @@ ENDPROC(cpu_v7_do_resume)
+ 	globl_equ	cpu_ca9mp_reset,	cpu_v7_reset
+ 	globl_equ	cpu_ca9mp_do_idle,	cpu_v7_do_idle
+ 	globl_equ	cpu_ca9mp_dcache_clean_area, cpu_v7_dcache_clean_area
+-#ifdef CONFIG_HARDEN_BRANCH_PREDICTOR
+-	globl_equ	cpu_ca9mp_switch_mm,	cpu_v7_btbinv_switch_mm
+-#else
+ 	globl_equ	cpu_ca9mp_switch_mm,	cpu_v7_switch_mm
+-#endif
+ 	globl_equ	cpu_ca9mp_set_pte_ext,	cpu_v7_set_pte_ext
+ .globl	cpu_ca9mp_suspend_size
+ .equ	cpu_ca9mp_suspend_size, cpu_v7_suspend_size + 4 * 2
+@@ -207,26 +202,6 @@ ENTRY(cpu_ca9mp_do_resume)
+ ENDPROC(cpu_ca9mp_do_resume)
+ #endif
+ 
+-/*
+- * Cortex-A12/A17
+- */
+-	globl_equ	cpu_ca17_proc_init,	cpu_v7_proc_init
+-	globl_equ	cpu_ca17_proc_fin,	cpu_v7_proc_fin
+-	globl_equ	cpu_ca17_reset,		cpu_v7_reset
+-	globl_equ	cpu_ca17_do_idle,	cpu_v7_do_idle
+-	globl_equ	cpu_ca17_dcache_clean_area, cpu_v7_dcache_clean_area
+-	globl_equ	cpu_ca17_set_pte_ext,	cpu_v7_set_pte_ext
+-	globl_equ	cpu_ca17_suspend_size,	cpu_v7_suspend_size
+-#ifdef CONFIG_HARDEN_BRANCH_PREDICTOR
+-	globl_equ	cpu_ca17_switch_mm,	cpu_v7_btbinv_switch_mm
+-#else
+-	globl_equ	cpu_ca17_switch_mm,	cpu_v7_switch_mm
+-#endif
+-#ifdef CONFIG_ARM_CPU_SUSPEND
+-	globl_equ	cpu_ca17_do_suspend,	cpu_v7_do_suspend
+-	globl_equ	cpu_ca17_do_resume,	cpu_v7_do_resume
+-#endif
+-
+ #ifdef CONFIG_CPU_PJ4B
+ 	globl_equ	cpu_pj4b_switch_mm,     cpu_v7_switch_mm
+ 	globl_equ	cpu_pj4b_set_pte_ext,	cpu_v7_set_pte_ext
+@@ -568,7 +543,6 @@ __v7_setup_stack:
+ 
+ 	@ define struct processor (see <asm/proc-fns.h> and proc-macros.S)
+ 	define_processor_functions v7, dabort=v7_early_abort, pabort=v7_pabort, suspend=1
+-	define_processor_functions ca17, dabort=v7_early_abort, pabort=v7_pabort, suspend=1
+ #ifndef CONFIG_ARM_LPAE
+ 	define_processor_functions ca8, dabort=v7_early_abort, pabort=v7_pabort, suspend=1
+ 	define_processor_functions ca9mp, dabort=v7_early_abort, pabort=v7_pabort, suspend=1
+@@ -679,7 +653,7 @@ __v7_ca7mp_proc_info:
+ __v7_ca12mp_proc_info:
+ 	.long	0x410fc0d0
+ 	.long	0xff0ffff0
+-	__v7_proc __v7_ca12mp_proc_info, __v7_ca12mp_setup, proc_fns = ca17_processor_functions
++	__v7_proc __v7_ca12mp_proc_info, __v7_ca12mp_setup
+ 	.size	__v7_ca12mp_proc_info, . - __v7_ca12mp_proc_info
+ 
+ 	/*
+@@ -709,7 +683,7 @@ __v7_b15mp_proc_info:
+ __v7_ca17mp_proc_info:
+ 	.long	0x410fc0e0
+ 	.long	0xff0ffff0
+-	__v7_proc __v7_ca17mp_proc_info, __v7_ca17mp_setup, proc_fns = ca17_processor_functions
++	__v7_proc __v7_ca17mp_proc_info, __v7_ca17mp_setup
+ 	.size	__v7_ca17mp_proc_info, . - __v7_ca17mp_proc_info
+ 
+ 	/*
+diff --git a/arch/arm64/boot/dts/freescale/fsl-imx8qm-lpddr4-arm2.dts b/arch/arm64/boot/dts/freescale/fsl-imx8qm-lpddr4-arm2.dts
+index 42f1908e219c..5d3b89463054 100644
+--- a/arch/arm64/boot/dts/freescale/fsl-imx8qm-lpddr4-arm2.dts
++++ b/arch/arm64/boot/dts/freescale/fsl-imx8qm-lpddr4-arm2.dts
+@@ -529,17 +529,17 @@
+ 
+ 		pinctrl_pciea: pcieagrp{
+ 			fsl,pins = <
+-				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO27	0x04000021
+-				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO28		0x04000021
+-				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO29		0x04000021
++				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO27	0x00000021
++				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO28		0x00000021
++				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO29		0x00000021
+ 			>;
+ 		};
+ 
+ 		pinctrl_pcieb: pciebgrp{
+ 			fsl,pins = <
+-				SC_P_PCIE_CTRL1_CLKREQ_B_LSIO_GPIO4_IO30	0x04000021
+-				SC_P_PCIE_CTRL1_WAKE_B_LSIO_GPIO4_IO31		0x04000021
+-				SC_P_PCIE_CTRL1_PERST_B_LSIO_GPIO5_IO00		0x04000021
++				SC_P_PCIE_CTRL1_CLKREQ_B_LSIO_GPIO4_IO30	0x00000021
++				SC_P_PCIE_CTRL1_WAKE_B_LSIO_GPIO4_IO31		0x00000021
++				SC_P_PCIE_CTRL1_PERST_B_LSIO_GPIO5_IO00		0x00000021
+ 			>;
+ 		};
+ 
+diff --git a/arch/arm64/boot/dts/freescale/fsl-imx8qm-mek.dts b/arch/arm64/boot/dts/freescale/fsl-imx8qm-mek.dts
+index 502561139cb5..abd13be4d4c1 100644
+--- a/arch/arm64/boot/dts/freescale/fsl-imx8qm-mek.dts
++++ b/arch/arm64/boot/dts/freescale/fsl-imx8qm-mek.dts
+@@ -419,11 +419,11 @@
+ 
+ 		pinctrl_pciea: pcieagrp{
+ 			fsl,pins = <
+-				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO27	0x04000021
+-				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO28		0x04000021
+-				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO29		0x04000021
+-				SC_P_LVDS1_I2C0_SDA_LVDS1_GPIO0_IO03		0x04000021
+-				SC_P_USDHC2_RESET_B_LSIO_GPIO4_IO09		0x04000021
++				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO27	0x00000021
++				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO28		0x00000021
++				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO29		0x00000021
++				SC_P_LVDS1_I2C0_SDA_LVDS1_GPIO0_IO03		0x00000021
++				SC_P_USDHC2_RESET_B_LSIO_GPIO4_IO09		0x00000021
+ 			>;
+ 		};
+ 
+diff --git a/arch/arm64/boot/dts/freescale/fsl-imx8qxp-lpddr4-arm2.dts b/arch/arm64/boot/dts/freescale/fsl-imx8qxp-lpddr4-arm2.dts
+index 0419a4a5d801..07cf13d2f88a 100644
+--- a/arch/arm64/boot/dts/freescale/fsl-imx8qxp-lpddr4-arm2.dts
++++ b/arch/arm64/boot/dts/freescale/fsl-imx8qxp-lpddr4-arm2.dts
+@@ -440,9 +440,9 @@
+ 
+ 		pinctrl_pcieb: pciebgrp{
+ 			fsl,pins = <
+-				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO00		0x04000021
+-				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO01	0x04000021
+-				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO02		0x04000021
++				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO00		0x06000021
++				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO01	0x06000021
++				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO02		0x06000021
+ 			>;
+ 		};
+ 
+diff --git a/arch/arm64/boot/dts/freescale/fsl-imx8qxp-mek.dts b/arch/arm64/boot/dts/freescale/fsl-imx8qxp-mek.dts
+index e66c55ed0d3a..f842ef07c8b5 100755
+--- a/arch/arm64/boot/dts/freescale/fsl-imx8qxp-mek.dts
++++ b/arch/arm64/boot/dts/freescale/fsl-imx8qxp-mek.dts
+@@ -504,9 +504,9 @@
+ 
+ 		pinctrl_pcieb: pcieagrp{
+ 			fsl,pins = <
+-				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO00		0x04000021
+-				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO01	0x04000021
+-				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO02		0x04000021
++				SC_P_PCIE_CTRL0_PERST_B_LSIO_GPIO4_IO00		0x06000021
++				SC_P_PCIE_CTRL0_CLKREQ_B_LSIO_GPIO4_IO01	0x06000021
++				SC_P_PCIE_CTRL0_WAKE_B_LSIO_GPIO4_IO02		0x06000021
+ 			>;
+ 		};
+ 
+diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
+index 2383099c39ce..da2bf9210fb2 100755
+--- a/arch/arm64/configs/defconfig
++++ b/arch/arm64/configs/defconfig
+@@ -21,12 +21,10 @@ CONFIG_CPUSETS=y
+ CONFIG_CGROUP_DEVICE=y
+ CONFIG_CGROUP_CPUACCT=y
+ CONFIG_CGROUP_PERF=y
+-CONFIG_NAMESPACES=y
+ CONFIG_USER_NS=y
+ CONFIG_SCHED_AUTOGROUP=y
+ CONFIG_RELAY=y
+ CONFIG_BLK_DEV_INITRD=y
+-CONFIG_EXPERT=y
+ CONFIG_KALLSYMS_ALL=y
+ # CONFIG_COMPAT_BRK is not set
+ CONFIG_PROFILING=y
+@@ -157,7 +155,6 @@ CONFIG_BT_HCIVHCI=y
+ CONFIG_CFG80211=y
+ CONFIG_NL80211_TESTMODE=y
+ CONFIG_CFG80211_WEXT=y
+-CONFIG_CFG80211_INTERNAL_REGDB=y
+ CONFIG_MAC80211=y
+ CONFIG_MAC80211_LEDS=y
+ CONFIG_NET_9P=y
+@@ -397,7 +394,6 @@ CONFIG_FB_MXC_DISP_FRAMEWORK=y
+ CONFIG_BACKLIGHT_GENERIC=m
+ CONFIG_BACKLIGHT_PWM=y
+ CONFIG_BACKLIGHT_LP855X=m
+-CONFIG_FRAMEBUFFER_CONSOLE=y
+ CONFIG_LOGO=y
+ # CONFIG_LOGO_LINUX_MONO is not set
+ # CONFIG_LOGO_LINUX_VGA16 is not set
+@@ -419,17 +415,6 @@ CONFIG_SND_SOC_IMX_CDNHDMI=y
+ CONFIG_SND_SOC_SAMSUNG=y
+ CONFIG_SND_SOC_RCAR=y
+ CONFIG_SND_SOC_AK4613=y
+-CONFIG_HID_A4TECH=y
+-CONFIG_HID_APPLE=y
+-CONFIG_HID_BELKIN=y
+-CONFIG_HID_CHERRY=y
+-CONFIG_HID_CHICONY=y
+-CONFIG_HID_CYPRESS=y
+-CONFIG_HID_EZKEY=y
+-CONFIG_HID_KENSINGTON=y
+-CONFIG_HID_LOGITECH=y
+-CONFIG_HID_MICROSOFT=y
+-CONFIG_HID_MONTEREY=y
+ CONFIG_HID_MULTITOUCH=y
+ CONFIG_USB=y
+ CONFIG_USB_OTG=y
+@@ -612,6 +597,7 @@ CONFIG_KVM=y
+ CONFIG_PRINTK_TIME=y
+ CONFIG_DEBUG_FS=y
+ CONFIG_MAGIC_SYSRQ=y
++CONFIG_DEBUG_KERNEL=y
+ CONFIG_LOCKUP_DETECTOR=y
+ # CONFIG_SCHED_DEBUG is not set
+ # CONFIG_DEBUG_PREEMPT is not set
+diff --git a/drivers/irqchip/irq-imx-irqsteer.c b/drivers/irqchip/irq-imx-irqsteer.c
+index e26d242e1c66..eec5308b266b 100644
+--- a/drivers/irqchip/irq-imx-irqsteer.c
++++ b/drivers/irqchip/irq-imx-irqsteer.c
+@@ -47,8 +47,8 @@ static void imx_irqsteer_irq_unmask(struct irq_data *d)
+ 	u32 val, idx;
+ 
+ 	spin_lock(&irqsteer_data->lock);
+-	idx = irqsteer_data->endian ?
+-		(irqsteer_data->channum - d->hwirq / 32 - 1) : d->hwirq / 32;
++	idx = irqsteer_data->endian ? (irqsteer_data->channum - d->hwirq / 32 - 1) :
++				      d->hwirq / 32;
+ 	reg = irqsteer_data->regs + CHANMASK(idx);
+ 	val = readl_relaxed(reg);
+ 	val |= 1 << (d->hwirq % 32);
+@@ -63,8 +63,7 @@ static void imx_irqsteer_irq_mask(struct irq_data *d)
+ 	u32 val, idx;
+ 
+ 	spin_lock(&irqsteer_data->lock);
+-	idx = irqsteer_data->endian ?
+-		(irqsteer_data->channum - d->hwirq / 32 - 1) : d->hwirq / 32;
++	idx = d->hwirq / 32;
+ 	reg = irqsteer_data->regs + CHANMASK(idx);
+ 	val = readl_relaxed(reg);
+ 	val &= ~(1 << (d->hwirq % 32));
+diff --git a/drivers/mxc/gpu-viv/Kbuild b/drivers/mxc/gpu-viv/Kbuild
+index a011a78f4666..39141de2d27d 100644
+--- a/drivers/mxc/gpu-viv/Kbuild
++++ b/drivers/mxc/gpu-viv/Kbuild
+@@ -125,10 +125,6 @@ ifeq ($(VIVANTE_ENABLE_3D), 1)
+ OBJS += $(ARCH_KERNEL_DIR)/gc_hal_kernel_recorder.o
+ endif
+ 
+-ifneq ($(CONFIG_ARM64),)
+-VIVANTE_ENABLE_VG=0
+-endif
+-
+ ifeq ($(VIVANTE_ENABLE_VG), 1)
+ OBJS +=\
+           $(HAL_KERNEL_DIR)/gc_hal_kernel_vg.o\
+diff --git a/drivers/mxc/gpu-viv/hal/kernel/inc/gc_hal_vg.h b/drivers/mxc/gpu-viv/hal/kernel/inc/gc_hal_vg.h
+index 83328c37fce6..f821f96f1cd0 100644
+--- a/drivers/mxc/gpu-viv/hal/kernel/inc/gc_hal_vg.h
++++ b/drivers/mxc/gpu-viv/hal/kernel/inc/gc_hal_vg.h
+@@ -293,6 +293,14 @@ typedef gctTHREADFUNCRESULT (gctTHREADFUNCTYPE * gctTHREADFUNC) (
+ ****************************** Kernel Debug Macro ******************************
+ \******************************************************************************/
+ 
++/* Set signal to signaled state for specified process. */
++gceSTATUS
++gckOS_SetSignal(
++    IN gckOS Os,
++    IN gctHANDLE Process,
++    IN gctSIGNAL Signal
++    );
++
+ /* Return the kernel logical pointer for the given physical one. */
+ gceSTATUS
+ gckOS_GetKernelLogical(
+diff --git a/drivers/mxc/gpu-viv/hal/os/linux/kernel/gc_hal_kernel_os.c b/drivers/mxc/gpu-viv/hal/os/linux/kernel/gc_hal_kernel_os.c
+index 4b0a2ff50ce2..9263a945795b 100644
+--- a/drivers/mxc/gpu-viv/hal/os/linux/kernel/gc_hal_kernel_os.c
++++ b/drivers/mxc/gpu-viv/hal/os/linux/kernel/gc_hal_kernel_os.c
+@@ -5965,6 +5965,66 @@ gckOS_Signal(
+     return status;
+ }
+ 
++#if gcdENABLE_VG
++gceSTATUS
++gckOS_SetSignalVG(
++    IN gckOS Os,
++    IN gctHANDLE Process,
++    IN gctSIGNAL Signal
++    )
++{
++    gceSTATUS status;
++    gctINT result;
++    struct task_struct * userTask;
++    struct siginfo info;
++
++    userTask = FIND_TASK_BY_PID((pid_t)(gctUINTPTR_T) Process);
++
++    if (userTask != gcvNULL)
++    {
++        info.si_signo = 48;
++        info.si_code  = __SI_CODE(__SI_RT, SI_KERNEL);
++        info.si_pid   = 0;
++        info.si_uid   = 0;
++        info.si_ptr   = (gctPOINTER) Signal;
++
++        /* Signals with numbers between 32 and 63 are real-time,
++           send a real-time signal to the user process. */
++        result = send_sig_info(48, &info, userTask);
++
++        printk("gckOS_SetSignalVG:0x%x\n", result);
++        /* Error? */
++        if (result < 0)
++        {
++            status = gcvSTATUS_GENERIC_IO;
++
++            gcmkTRACE(
++                gcvLEVEL_ERROR,
++                "%s(%d): an error has occurred.\n",
++                __FUNCTION__, __LINE__
++                );
++        }
++        else
++        {
++            status = gcvSTATUS_OK;
++        }
++    }
++    else
++    {
++        status = gcvSTATUS_GENERIC_IO;
++
++        gcmkTRACE(
++            gcvLEVEL_ERROR,
++            "%s(%d): an error has occurred.\n",
++            __FUNCTION__, __LINE__
++            );
++    }
++
++    /* Return status. */
++    return status;
++}
++#endif
++
+ /*******************************************************************************
+ **
+ **  gckOS_UserSignal
+@@ -6460,6 +6520,84 @@ gckOS_DecrementSemaphore(
+     return status;
+ }
+ 
++/*******************************************************************************
++**
++**  gckOS_SetSignal
++**
++**  Set the specified signal to signaled state.
++**
++**  INPUT:
++**
++**      gckOS Os
++**          Pointer to the gckOS object.
++**
++**      gctHANDLE Process
++**          Handle of process owning the signal.
++**
++**      gctSIGNAL Signal
++**          Pointer to the gctSIGNAL.
++**
++**  OUTPUT:
++**
++**      Nothing.
++*/
++gceSTATUS
++gckOS_SetSignal(
++    IN gckOS Os,
++    IN gctHANDLE Process,
++    IN gctSIGNAL Signal
++    )
++{
++    gceSTATUS status;
++    gctINT result;
++    struct task_struct * userTask;
++    struct siginfo info;
++
++    userTask = FIND_TASK_BY_PID((pid_t)(gctUINTPTR_T) Process);
++
++    if (userTask != gcvNULL)
++    {
++        info.si_signo = 48;
++        info.si_code  = __SI_CODE(__SI_RT, SI_KERNEL);
++        info.si_pid   = 0;
++        info.si_uid   = 0;
++        info.si_ptr   = (gctPOINTER) Signal;
++
++        /* Signals with numbers between 32 and 63 are real-time,
++           send a real-time signal to the user process. */
++        result = send_sig_info(48, &info, userTask);
++
++        /* Error? */
++        if (result < 0)
++        {
++            status = gcvSTATUS_GENERIC_IO;
++
++            gcmkTRACE(
++                gcvLEVEL_ERROR,
++                "%s(%d): an error has occurred.\n",
++                __FUNCTION__, __LINE__
++                );
++        }
++        else
++        {
++            status = gcvSTATUS_OK;
++        }
++    }
++    else
++    {
++        status = gcvSTATUS_GENERIC_IO;
++
++        gcmkTRACE(
++            gcvLEVEL_ERROR,
++            "%s(%d): an error has occurred.\n",
++            __FUNCTION__, __LINE__
++            );
++    }
++
++    /* Return status. */
++    return status;
++}
++
+ /******************************************************************************\
+ ******************************** Thread Object *********************************
+ \******************************************************************************/
+diff --git a/drivers/mxc/gpu-viv/hal/os/linux/kernel/platform/freescale/gc_hal_kernel_platform_imx.c b/drivers/mxc/gpu-viv/hal/os/linux/kernel/platform/freescale/gc_hal_kernel_platform_imx.c
+index 0bc059c34589..cad3e870967b 100644
+--- a/drivers/mxc/gpu-viv/hal/os/linux/kernel/platform/freescale/gc_hal_kernel_platform_imx.c
++++ b/drivers/mxc/gpu-viv/hal/os/linux/kernel/platform/freescale/gc_hal_kernel_platform_imx.c
+@@ -317,7 +317,7 @@ static struct notifier_block thermal_hot_pm_notifier =
+     .notifier_call = thermal_hot_pm_notify,
+ };
+ 
+-static ssize_t gpu3DMinClock_show(struct device_driver *dev, char *buf)
++static ssize_t show_gpu3DMinClock(struct device_driver *dev, char *buf)
+ {
+     gctUINT currentf,minf,maxf;
+     gckGALDEVICE galDevice;
+@@ -335,7 +335,7 @@ static ssize_t gpu3DMinClock_show(struct device_driver *dev, char *buf)
+     return strlen(buf);
+ }
+ 
+-static ssize_t gpu3DMinClock_store(struct device_driver *dev, const char *buf, size_t count)
++static ssize_t update_gpu3DMinClock(struct device_driver *dev, const char *buf, size_t count)
+ {
+ 
+     gctINT fields;
+@@ -357,7 +357,7 @@ static ssize_t gpu3DMinClock_store(struct device_driver *dev, const char *buf, s
+     return count;
+ }
+ 
+-static DRIVER_ATTR_RW(gpu3DMinClock);
++static DRIVER_ATTR(gpu3DMinClock, S_IRUGO | S_IWUSR, show_gpu3DMinClock, update_gpu3DMinClock);
+ #endif
+ 
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+@@ -421,7 +421,7 @@ struct imx_priv
+ static struct imx_priv imxPriv;
+ 
+ #if defined(CONFIG_PM_OPP)
+-static ssize_t gpu_mode_show(struct device_driver *dev, char *buf)
++static ssize_t show_gpuMode(struct device_driver *dev, char *buf)
+ {
+     struct imx_priv *priv = &imxPriv;
+     char buffer[512];
+@@ -470,7 +470,7 @@ static ssize_t gpu_mode_show(struct device_driver *dev, char *buf)
+     return strlen(buf);
+ }
+ 
+-static ssize_t gpu_mode_store(struct device_driver *dev, const char *buf, size_t count)
++static ssize_t update_gpuMode(struct device_driver *dev, const char *buf, size_t count)
+ {
+     unsigned long core_freq = 0;
+     unsigned long shader_freq = 0;
+@@ -515,7 +515,7 @@ static ssize_t gpu_mode_store(struct device_driver *dev, const char *buf, size_t
+     return count;
+ }
+ 
+-static DRIVER_ATTR_RW(gpu_mode);
++static DRIVER_ATTR(gpu_mode, S_IRUGO | S_IWUSR, show_gpuMode, update_gpuMode);
+ 
+ int init_gpu_opp_table(struct device *dev)
+ {
+diff --git a/drivers/net/wireless/bcmdhd/wl_cfg80211.c b/drivers/net/wireless/bcmdhd/wl_cfg80211.c
+index 3958b2332faa..4ae767f0603d 100644
+--- a/drivers/net/wireless/bcmdhd/wl_cfg80211.c
++++ b/drivers/net/wireless/bcmdhd/wl_cfg80211.c
+@@ -8110,11 +8110,6 @@ wl_cfg80211_reg_notifier(
+ 		/* in case of no supported country by regdb
+ 		     lets driver setup platform default Locale
+ 		*/
+-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0))
+-		return -EINVAL;
+-#else
+-		return;
+-#endif /* kernel version < 3.9.0 */
+ 	}
+ 
+ 	WL_ERR(("Set country code %c%c from %s\n",
+diff --git a/drivers/net/wireless/bcmdhd_1363/wl_cfg80211.c b/drivers/net/wireless/bcmdhd_1363/wl_cfg80211.c
+index 4b45bed183be..f0836bd9865d 100644
+--- a/drivers/net/wireless/bcmdhd_1363/wl_cfg80211.c
++++ b/drivers/net/wireless/bcmdhd_1363/wl_cfg80211.c
+@@ -9428,11 +9428,6 @@ wl_cfg80211_reg_notifier(
+ 		/* in case of no supported country by regdb
+ 		     lets driver setup platform default Locale
+ 		*/
+-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0))
+-		return -EINVAL;
+-#else
+-		return;
+-#endif /* kernel version < 3.9.0 */
+ 	}
+ 
+ 	WL_ERR(("Set country code %c%c from %s\n",
+-- 
+2.24.1
+

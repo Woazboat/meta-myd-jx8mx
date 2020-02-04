@@ -1,0 +1,35 @@
+From 2d3f684aeaca96f8a4f1e07322ba5b85dffbd492 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Mon, 27 May 2019 09:21:39 +0800
+Subject: [PATCH 22/34] modify tc358755 enable
+
+---
+ drivers/gpu/drm/panel/panel-tc358775.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/panel/panel-tc358775.c b/drivers/gpu/drm/panel/panel-tc358775.c
+index e8c6b5da1c39..867047533710 100755
+--- a/drivers/gpu/drm/panel/panel-tc358775.c
++++ b/drivers/gpu/drm/panel/panel-tc358775.c
+@@ -672,7 +672,8 @@ static int tc358775_panel_prepare(struct drm_panel *panel)
+         DRM_DEV_ERROR(dev, "Failed to exit sleep mode (%d)\n", ret);
+         goto fail;
+     }
+-    msleep(120);
++	msleep(20);
++ //   msleep(120);
+     ret = mipi_dsi_dcs_set_display_on(dsi);
+     if (ret < 0) {
+         DRM_DEV_ERROR(dev, "Failed to exit sleep mode (%d)\n", ret);
+@@ -739,7 +740,7 @@ static int tc358775_panel_enable(struct drm_panel *panel)
+ 	struct device *dev = &tc358775->dsi->dev;
+ 
+     printk("function:%s line:%d ----------- \n",__FUNCTION__,__LINE__);
+-	if (tc358775->stby)
++	if (tc358775->enabled)
+ 		return 0;
+ 
+ 	DRM_DEV_DEBUG_DRIVER(dev, "\n");
+-- 
+2.24.1
+

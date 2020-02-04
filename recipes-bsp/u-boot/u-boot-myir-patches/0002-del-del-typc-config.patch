@@ -1,0 +1,24 @@
+From dabdb5991b1f5b9a62bd6d717f612a7c31fb0462 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Mon, 17 Jun 2019 15:45:39 +0800
+Subject: [PATCH 2/3] [del] del typc config
+
+---
+ configs/imx8mq_evk_defconfig | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/configs/imx8mq_evk_defconfig b/configs/imx8mq_evk_defconfig
+index 372ab57..0390c9c 100644
+--- a/configs/imx8mq_evk_defconfig
++++ b/configs/imx8mq_evk_defconfig
+@@ -42,7 +42,6 @@ CONFIG_DM_THERMAL=y
+ CONFIG_FIT=y
+ CONFIG_SPL_FIT=y
+ CONFIG_SPL_LOAD_FIT=y
+-CONFIG_USB_TCPC=y
+ CONFIG_USB=y
+ CONFIG_DM_USB=y
+ CONFIG_VIDEO=y
+-- 
+2.24.1
+

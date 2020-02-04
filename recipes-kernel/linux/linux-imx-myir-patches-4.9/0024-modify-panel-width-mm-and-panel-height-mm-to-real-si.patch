@@ -1,0 +1,28 @@
+From 3a57e45e7a9c52ebd20e39a4908df656e0eae2c6 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Wed, 29 May 2019 09:32:05 +0800
+Subject: [PATCH 24/34] modify panel-width-mm and panel-height-mm to real
+ size,it will affect dpi
+
+---
+ arch/arm64/boot/dts/freescale/panel-taihean.dtsi | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/panel-taihean.dtsi b/arch/arm64/boot/dts/freescale/panel-taihean.dtsi
+index 35a35a5dad05..66e9d8691d63 100755
+--- a/arch/arm64/boot/dts/freescale/panel-taihean.dtsi
++++ b/arch/arm64/boot/dts/freescale/panel-taihean.dtsi
+@@ -32,8 +32,8 @@
+ 		stby-gpio = <&gpio3 24 GPIO_ACTIVE_HIGH>;
+ 		reset-gpio = <&gpio4 29 GPIO_ACTIVE_HIGH>;
+ 		dsi-lanes = <4>;
+-		panel-width-mm = <1280>;
+-		panel-height-mm = <1024>;
++		panel-width-mm = <396>;
++		panel-height-mm = <324>;
+ 		
+ 		toshiba,debug = <1>;
+ 		toshiba,ppi_tx_rx_ta = <0x00050006>;
+-- 
+2.24.1
+

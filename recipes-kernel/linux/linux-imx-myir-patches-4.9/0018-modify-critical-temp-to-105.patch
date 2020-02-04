@@ -1,0 +1,25 @@
+From a84c34fa8531aea06413d990cf0b78d876f3d1da Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Thu, 28 Mar 2019 15:33:54 +0800
+Subject: [PATCH 18/34] modify critical temp to 105
+
+---
+ arch/arm64/boot/dts/freescale/myb-fsl-imx8mq.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq.dtsi b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq.dtsi
+index 0493687fe62b..49b2c1d68eba 100755
+--- a/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq.dtsi
++++ b/arch/arm64/boot/dts/freescale/myb-fsl-imx8mq.dtsi
+@@ -420,7 +420,7 @@
+ 					type = "passive";
+ 				};
+ 				cpu_crit0: trip1 {
+-					temperature = <95000>;
++					temperature = <105000>;
+ 					hysteresis = <2000>;
+ 					type = "critical";
+ 				};
+-- 
+2.24.1
+

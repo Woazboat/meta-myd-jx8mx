@@ -1,0 +1,28 @@
+From 1a9cd848baa6ccc75ba64f710c911a815ec89328 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Wed, 5 Dec 2018 15:41:41 +0800
+Subject: [PATCH 09/34] compatable spi
+
+---
+ drivers/spi/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+ mode change 100644 => 100755 drivers/spi/Kconfig
+
+diff --git a/drivers/spi/Kconfig b/drivers/spi/Kconfig
+old mode 100644
+new mode 100755
+index c285948a2e45..650bb579e205
+--- a/drivers/spi/Kconfig
++++ b/drivers/spi/Kconfig
+@@ -290,7 +290,7 @@ config SPI_IMG_SPFI
+ 
+ config SPI_IMX
+ 	tristate "Freescale i.MX SPI controllers"
+-	depends on ARCH_MXC || COMPILE_TEST
++	depends on ARCH_MXC || COMPILE_TEST || ARM64
+ 	select SPI_BITBANG
+ 	help
+ 	  This enables using the Freescale i.MX SPI controllers in master
+-- 
+2.24.1
+

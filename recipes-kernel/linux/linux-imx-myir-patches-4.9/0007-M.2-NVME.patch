@@ -1,0 +1,25 @@
+From 497ef1d26e89d34a59e183c57d10104a345fca36 Mon Sep 17 00:00:00 2001
+From: duxy <568988005@qq.com>
+Date: Wed, 5 Dec 2018 15:39:28 +0800
+Subject: [PATCH 07/34] M.2 NVME
+
+---
+ arch/arm64/configs/defconfig | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
+index c8e57bb1c232..5ab5093efee4 100755
+--- a/arch/arm64/configs/defconfig
++++ b/arch/arm64/configs/defconfig
+@@ -656,6 +656,8 @@ CONFIG_CRYPTO_GHASH_ARM64_CE=y
+ CONFIG_CRYPTO_AES_ARM64_CE_CCM=y
+ CONFIG_CRYPTO_AES_ARM64_CE_BLK=y
+ CONFIG_CRYPTO_CRC32_ARM64=y
++CONFIG_NVME_CORE=y
++CONFIG_BLK_DEV_NVME=y
+ CONFIG_PPP=y
+ CONFIG_PPP_BSDCOMP=y
+ CONFIG_PPP_DEFLATE=y
+-- 
+2.24.1
+
